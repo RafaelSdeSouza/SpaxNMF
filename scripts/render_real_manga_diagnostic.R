@@ -188,6 +188,23 @@ residual_map <- function(x, reconstruction, nx, ny) {
   matrix(rowMeans((x - reconstruction)^2), nrow = nx, ncol = ny)
 }
 
+top_flux_fraction <- function(map, fraction = 0.01) {
+  x <- sort(as.numeric(map), decreasing = TRUE)
+  denom <- sum(x)
+  if (!is.finite(denom) || denom <= 0) {
+    return(0)
+  }
+
+  n_top <- max(1L, ceiling(length(x) * fraction))
+  sum(x[seq_len(min(n_top, length(x)))]) / denom
+}
+
+component_concentration <- function(spatial, nx, ny, fraction = 0.01) {
+  vapply(seq_len(ncol(spatial)), function(i) {
+    top_flux_fraction(matrix(spatial[, i], nrow = nx, ncol = ny), fraction = fraction)
+  }, numeric(1))
+}
+
 pick_default_cube <- function() {
   candidates <- c(
     Sys.getenv("SPAXNMF_REAL_CUBE", unset = ""),
@@ -489,6 +506,8 @@ spatial_sigma <- read_env_numeric("SPAXNMF_REAL_SPATIAL_SIGMA", 1)
 smooth_components <- read_env_indices("SPAXNMF_REAL_SMOOTH_COMPONENTS", NULL)
 sparse_components <- read_env_indices("SPAXNMF_REAL_SPARSE_COMPONENTS", NULL)
 output_path <- read_env_path("SPAXNMF_REAL_OUTPUT", "site/images/manga-real-diagnostic.png")
+metrics_output <- read_env_path("SPAXNMF_REAL_METRICS_OUTPUT", "")
+component_metrics_output <- read_env_path("SPAXNMF_REAL_COMPONENT_METRICS_OUTPUT", "")
 component_names <- paste0("Component ", seq_len(k))
 
 prior_note <- if (!is.null(sparse_components) && length(sparse_components)) {
@@ -609,6 +628,54 @@ example_df <- bind_rows(lapply(seq_along(example_spaxels), function(ii) {
 pca_mse <- mean((real_cube$matrix - fit_pca$reconstruction)^2)
 vanilla_mse <- mean((real_cube$matrix - fit_vanilla$reconstruction)^2)
 spatial_mse <- mean((real_cube$matrix - fit_spatial$reconstruction)^2)
+
+vanilla_top1 <- component_concentration(fit_vanilla$spatial, real_cube$nx, real_cube$ny, fraction = 0.01)
+vanilla_top5 <- component_concentration(fit_vanilla$spatial, real_cube$nx, real_cube$ny, fraction = 0.05)
+spatial_top1 <- component_concentration(fit_spatial$spatial, real_cube$nx, real_cube$ny, fraction = 0.01)
+spatial_top5 <- component_concentration(fit_spatial$spatial, real_cube$nx, real_cube$ny, fraction = 0.05)
+
+sparse_idx <- if (is.null(sparse_components)) integer() else sort(unique(as.integer(sparse_components)))
+sparse_idx <- sparse_idx[sparse_idx >= 1L & sparse_idx <= k]
+
+summary_metrics <- tibble(
+  model = c("PCA", "Vanilla NMF", "Spatial NMF"),
+  mse = c(pca_mse, vanilla_mse, spatial_mse),
+  mean_top1pct = c(NA_real_, mean(vanilla_top1), mean(spatial_top1)),
+  mean_top5pct = c(NA_real_, mean(vanilla_top5), mean(spatial_top5)),
+  sparse_top1pct = c(
+    NA_real_,
+    if (length(sparse_idx)) mean(vanilla_top1[sparse_idx]) else NA_real_,
+    if (length(sparse_idx)) mean(spatial_top1[sparse_idx]) else NA_real_
+  ),
+  sparse_top5pct = c(
+    NA_real_,
+    if (length(sparse_idx)) mean(vanilla_top5[sparse_idx]) else NA_real_,
+    if (length(sparse_idx)) mean(spatial_top5[sparse_idx]) else NA_real_
+  ),
+  cube = basename(real_cube$path),
+  k = k,
+  sky_mode = sky_mode,
+  lambda_smooth = lambda_smooth,
+  lambda_spatial = c(NA_real_, 0, lambda_spatial),
+  lambda_sparse = c(NA_real_, 0, lambda_sparse)
+)
+
+component_metrics <- bind_rows(
+  tibble(
+    model = "Vanilla NMF",
+    component = component_names,
+    top1pct = vanilla_top1,
+    top5pct = vanilla_top5,
+    sparse_target = component_names %in% component_names[sparse_idx]
+  ),
+  tibble(
+    model = "Spatial NMF",
+    component = component_names,
+    top1pct = spatial_top1,
+    top5pct = spatial_top5,
+    sparse_target = component_names %in% component_names[sparse_idx]
+  )
+)
 
 base_panel_theme <- theme(
   plot.title = element_text(face = "bold", size = 16),
@@ -856,3 +923,13 @@ ggsave(
   dpi = 320,
   bg = "white"
 )
+
+if (nzchar(metrics_output)) {
+  dir.create(dirname(metrics_output), recursive = TRUE, showWarnings = FALSE)
+  write.csv(summary_metrics, metrics_output, row.names = FALSE)
+}
+
+if (nzchar(component_metrics_output)) {
+  dir.create(dirname(component_metrics_output), recursive = TRUE, showWarnings = FALSE)
+  write.csv(component_metrics, component_metrics_output, row.names = FALSE)
+}

@@ -4,30 +4,39 @@ project:
 
 website:
   title: SpaxNMF
+  site-url: https://rafaelsdesouza.github.io/SpaxNMF/
+  repo-url: https://github.com/RafaelSdeSouza/SpaxNMF
   navbar:
     left:
       - href: index.qmd
         text: Home
+      - href: model.qmd
+        text: Model
+      - href: benchmark.qmd
+        text: Benchmark
       - href: getting-started.qmd
         text: Getting Started
-      - href: reference.qmd
-        text: Reference
       - href: ifu-workflow.qmd
         text: IFU Workflow
+      - href: reference.qmd
+        text: Reference
     right:
       - icon: github
         href: https://github.com/RafaelSdeSouza/SpaxNMF
   page-footer:
-    left: SpaxNMF
+    left: "SpaxNMF"
+    right: "Spatially aware NMF for IFU cubes"
 
 format:
   html:
     theme:
       light: cosmo
     toc: true
+    page-navigation: true
+    smooth-scroll: true
     css: styles.css
 
 execute:
-  echo: true
+  echo: false
   warning: false
   message: false
