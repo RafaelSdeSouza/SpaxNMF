@@ -593,7 +593,7 @@ spectra_df <- bind_rows(
   group_by(model, component) |>
   mutate(
     raw_value = display_positive(value),
-    smooth_value = display_positive(display_smooth(value))
+    smooth_value = display_positive(display_smooth(value, max_k = 17L))
   ) |>
   ungroup() |>
   mutate(
@@ -727,7 +727,7 @@ focus_annotation <- component_metrics |>
   mutate(
     model = factor(model, levels = c("Vanilla NMF", "Spatial NMF")),
     component = factor(component, levels = focus_components),
-    panel_label = factor(focus_labels[component], levels = focus_panel_levels),
+    panel_label = factor(focus_labels[as.character(component)], levels = focus_panel_levels),
     x = max(real_cube$wavelength) - 0.03 * diff(range(real_cube$wavelength)),
     y = c(0.96, 0.84)[as.integer(model)],
     label = sprintf("Top 1%% = %.3f", top1pct)
@@ -737,7 +737,7 @@ focus_basis_df <- spectra_df |>
   filter(component %in% focus_components) |>
   mutate(
     component = factor(component, levels = focus_components),
-    panel_label = factor(focus_labels[component], levels = focus_panel_levels)
+    panel_label = factor(focus_labels[as.character(component)], levels = focus_panel_levels)
   )
 
 focus_observed_df <- bind_rows(lapply(focus_idx, function(i) {
@@ -878,10 +878,9 @@ if (!is.null(real_cube$sky)) {
 
 p_spectra <- ggplot(
   focus_basis_df,
-  aes(wavelength, raw_value, color = model)
+  aes(wavelength, smooth_value, color = model)
 ) +
-  geom_line(linewidth = 0.55, alpha = 0.25) +
-  geom_line(aes(y = smooth_value), linewidth = 1.05) +
+  geom_line(linewidth = 1.15) +
   geom_line(
     data = focus_observed_df,
     aes(wavelength, value),
@@ -927,7 +926,7 @@ p_spectra <- ggplot(
 
 p_maps <- ggplot(
   subset(maps_df, component %in% focus_components) |>
-    mutate(panel_label = factor(focus_labels[component], levels = focus_panel_levels)),
+    mutate(panel_label = factor(focus_labels[as.character(component)], levels = focus_panel_levels)),
   aes(ix, iy, fill = value)
 ) +
   geom_tile() +

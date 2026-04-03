@@ -62,7 +62,7 @@ concentrated maps. For the designated sparse components, the
 ## How To Read The Figure
 
 - The reconstruction panel checks whether the mixed prior preserves acceptable spaxel-level fits.
-- The compact-component spectra panel highlights the designated sparse candidates rather than all components at once.
+- The compact-component spectra panel is diagnostic only: on this mixed cube the recovered basis spectra are still not clean astrophysical templates, so the main comparison is relative rather than interpretive.
 - The compact-component maps panel is the main spatial diagnostic for whether the sparse prior is isolating localized structure.
 - The residual-energy panel is secondary: PCA is expected to win on pure rank-\(k\) squared-error reconstruction.
 

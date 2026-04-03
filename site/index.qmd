@@ -190,19 +190,25 @@ configuration used to generate them.
 </div>
 
 <div class="info-panel">
-<h3>Saved benchmark output</h3>
+<h3>What the benchmark is for</h3>
 <p>
-The figure below is generated directly from the repository benchmark script and
-is updated whenever the saved benchmark outputs are refreshed.
+This benchmark is intended as a technical validation target rather than a
+front-page showcase. It is useful for checking whether the mixed spatial+sparse
+prior improves compact-component concentration and preserves acceptable
+reconstruction quality under matched preprocessing.
 </p>
 
-```{r}
-if (file.exists("images/ngc1512-benchmark.png")) {
-  knitr::include_graphics("images/ngc1512-benchmark.png")
-} else {
-  cat("Benchmark figure not found in `docs/images/` yet.")
-}
-```
+<ul class="hero-list">
+<li>PCA remains the rank-\(k\) squared-error baseline.</li>
+<li>Vanilla NMF provides the non-negative comparison without spatial coupling.</li>
+<li>SpaxNMF adds Gaussian spatial smoothing and optional sparse compact-source components.</li>
+<li>The full figure, saved metrics, and run settings live on the benchmark page.</li>
+</ul>
+
+<p class="hero-card-note">
+Use the benchmark page when you want the detailed diagnostic, not the main
+landing-page overview.
+</p>
 </div>
 </div>
 
