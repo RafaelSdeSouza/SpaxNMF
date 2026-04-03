@@ -1,18 +1,42 @@
 # SpaxNMF
 
 `SpaxNMF` is an R package for IFU cube decomposition with regularized
-non-negative matrix factorization. The current package centers on reshaping
-cubes, fitting a baseline NMF model with smooth spectral components, and
-inspecting the recovered spatial maps and spectra.
+non-negative matrix factorization. It provides tools for reshaping IFU cubes,
+fitting spatially regularized NMF models, and inspecting recovered
+component-weight maps and spectra.
 
-The model is
+The fitted model factorizes the data matrix as
 
 $$
 X \approx A S
 $$
 
-where `X` is a spaxel-by-wavelength matrix, `A` contains spatial abundances,
-and `S` contains component spectra.
+where `X` is a spaxel-by-wavelength matrix, `A` contains non-negative
+component weights, and `S` contains non-negative component spectra.
+
+The objective currently implemented in `spax_nmf()` is
+
+$$
+\mathcal{L}(A, S)=
+\|X-AS\|_F^2
++\lambda_S \|DS\|_F^2
++\sum_c \lambda_{A,c}\sum_{i,j} w_{ij}(A_{ic}-A_{jc})^2
++\sum_c \lambda_{C,c}\|A_{:,c}\|_1
+$$
+
+with Gaussian spatial couplings
+
+$$
+w_{ij} = \exp\left(-\frac{d_{ij}^2}{2\sigma^2}\right).
+$$
+
+In words:
+
+- `lambda_smooth` keeps component spectra smooth in wavelength.
+- `lambda_spatial` couples nearby spaxels so selected component-weight maps are
+  spatially coherent.
+- `lambda_sparse` can be applied to chosen components to favor compact,
+  GC-like or point-like structure.
 
 Each spaxel spectrum is represented as a non-negative combination of shared
 component spectra. The weights vary across the field, while the component
@@ -51,7 +75,7 @@ summary(fit)
 The fitted object supports a compact interface inspired by `prcomp` and `NMF`.
 
 ```r
-# abundance matrix (spaxels x components)
+# component-weight matrix (spaxels x components)
 fit$spatial
 
 # component spectra (components x wavelength)
@@ -110,13 +134,11 @@ When `cube_to_matrix()` receives a FITS-like list object, it now carries
 non-image entries such as headers and other metadata through the matrix, the
 fitted object, and reconstructed cubes.
 
-## Roadmap
+## Applications
 
-The package is being cleaned up around one main use case: IFU demonstrations
-that compare what we learn from PCA, vanilla NMF, and a future spatially aware
-NMF model on public MaNGA cubes. The synthetic example stays in the package so
-the website and tests remain fast and reproducible, while the real-data demos
-will move toward a small set of curated MaNGA examples.
+SpaxNMF is intended for methodological studies and case-study analyses of IFU
+data, including matched comparisons among PCA, vanilla NMF, and spatially
+regularized NMF on curated survey cubes.
 
 ## Documentation
 

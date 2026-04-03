@@ -61,8 +61,7 @@ cube_metadata(cube_hat)
 If redshift information is stored in the FITS-side metadata, it will now be
 preserved as metadata and can be carried into fitted and reconstructed outputs.
 
-## Planned MaNGA comparisons
+## Comparative analyses
 
-The intended real-data demos for this package will use public MaNGA LOGCUBE
-products to compare PCA, vanilla NMF, and spatial NMF on the same galaxy after
-matched preprocessing.
+Public LOGCUBE products can be used to compare PCA, vanilla NMF, and spatial
+NMF on the same target after matched preprocessing.

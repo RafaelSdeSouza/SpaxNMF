@@ -53,21 +53,20 @@ Observed versus reconstructed spectra:
 
 ## What the outputs mean
 
-- `fit$spatial` contains one abundance weight per spaxel and per component.
+- `fit$spatial` contains one component weight per spaxel and per component.
 - `fit$spectra` contains the recovered component spectra.
 - `fit$reconstruction` is the model approximation `A %*% S`.
 - `fitted(fit, nx, ny)` and `predict(fit, type = "cube", nx, ny)` reshape that
   reconstruction back into a cube.
 - `residuals(fit, x = ...)` returns data minus reconstruction.
 
-## Real-data roadmap
+## Real-data examples
 
-The next demo layer will use a small set of public MaNGA cubes. The main goal
-is to compare:
+The same workflow can be applied to curated survey cubes in order to compare:
 
 - PCA components
 - vanilla NMF components
 - spatial NMF components
 
-using a consistent component-spectrum figure and the same preprocessing for all
+using a consistent component-spectrum figure and matched preprocessing across
 methods.

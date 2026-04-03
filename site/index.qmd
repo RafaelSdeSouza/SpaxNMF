@@ -7,19 +7,39 @@ non-negative matrix factorization.
 
 ::: {.hero-note}
 The package fits a low-rank model that decomposes a spectral matrix into
-component spectra and spatial abundance maps while preserving non-negativity.
+component spectra and spatially regularized component-weight maps while
+preserving non-negativity.
 :::
 
 ## Model
 
-The package solves
+The package factorizes the data matrix as
 
 $$
 X \approx A S
 $$
 
-where `X` is a spaxel-by-wavelength matrix, `A` contains spatial abundances,
-and `S` contains component spectra.
+where `X` is a spaxel-by-wavelength matrix, `A` contains non-negative
+component weights, and `S` contains non-negative component spectra.
+
+The loss currently implemented in `spax_nmf()` is
+
+$$
+\mathcal{L}(A, S)=
+\|X-AS\|_F^2
++\lambda_S \|DS\|_F^2
++\sum_c \lambda_{A,c}\sum_{i,j} w_{ij}(A_{ic}-A_{jc})^2
++\sum_c \lambda_{C,c}\|A_{:,c}\|_1
+$$
+
+with
+
+$$
+w_{ij} = \exp\left(-\frac{d_{ij}^2}{2\sigma^2}\right),
+$$
+
+so the spatial term explicitly couples nearby spaxels and discourages noisy
+salt-and-pepper component-weight maps.
 
 ## Workflow
 
@@ -28,7 +48,7 @@ flowchart LR
   A["IFU cube<br/>nx × ny × nλ"] --> B["cube_to_matrix()"]
   B --> C["spaxel × wavelength matrix X"]
   C --> D["spax_nmf()"]
-  D --> E["A: abundance maps"]
+  D --> E["A: component-weight maps"]
   D --> F["S: component spectra"]
   D --> G["AS: reconstruction"]
   E --> H["component_map()"]
@@ -57,12 +77,11 @@ synthetic example used throughout the documentation.
 - `fitted()`, `predict()`, and `residuals()` provide standard model methods.
 - `plot()` and `plot_reconstruction()` provide quick diagnostics.
 
-## Real-data direction
+## Real-data scope
 
-The package is being cleaned up around a small set of MaNGA cube demos. The
-goal is to compare PCA, vanilla NMF, and future spatially aware NMF models
-using the same style of component-spectrum figure developed for the original
-unmixing work.
+The package supports comparative IFU analyses in which PCA, vanilla NMF, and
+spatially regularized NMF are evaluated under matched preprocessing and
+visualized with a common diagnostic style.
 
 ## Installation
 

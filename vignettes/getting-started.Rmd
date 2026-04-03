@@ -49,20 +49,20 @@ image(map1, main = "Component 1", xlab = "x", ylab = "y")
 plot_reconstruction(fit, demo$matrix, n = 4, wavelength = demo$wavelength)
 ```
 
-## Real-data roadmap
+## Real-data examples
 
-The real-data examples for this package will move toward a small set of public
-MaNGA cubes, with matched preprocessing and side-by-side comparisons between
-PCA, vanilla NMF, and spatial NMF.
+The real-data examples for this package use curated public MaNGA cubes with
+matched preprocessing and side-by-side comparisons among PCA, vanilla NMF, and
+spatial NMF.
 
 ## Typical workflow
 
 1. Read or simulate an IFU cube.
 2. Convert it with `cube_to_matrix()`.
 3. Fit `spax_nmf()`.
-4. Plot component spectra and abundance maps.
+4. Plot component spectra and component-weight maps.
 5. Compare the recovered structures with baseline decompositions such as PCA
    and classical NMF.
 
-At this stage, `SpaxNMF` is best positioned for a methods note with one
-synthetic example and one real-data application.
+This workflow supports both controlled synthetic examples and targeted real-data
+applications.
