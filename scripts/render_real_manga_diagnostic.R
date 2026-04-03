@@ -157,6 +157,22 @@ display_positive <- function(x) {
   x / s
 }
 
+display_component_shape <- function(x, max_k = 17L, q_low = 0.05, q_high = 0.95) {
+  x <- as.numeric(display_smooth(x, max_k = max_k))
+  baseline <- stats::quantile(x, probs = q_low, na.rm = TRUE, names = FALSE)
+  x <- pmax(x - baseline, 0)
+
+  s <- stats::quantile(x, probs = q_high, na.rm = TRUE, names = FALSE)
+  if (!is.finite(s) || s <= 0) {
+    s <- max(x, na.rm = TRUE)
+  }
+  if (!is.finite(s) || s <= 0) {
+    return(rep(0, length(x)))
+  }
+
+  pmin(x / s, 1.15)
+}
+
 display_smooth <- function(x, max_k = 11L) {
   x <- as.numeric(x)
   if (length(x) < 3L) {
@@ -218,7 +234,7 @@ top_weight_spectrum <- function(x, weights, fraction = 0.01) {
   n_top <- max(1L, ceiling(length(weights) * fraction))
   idx <- order(weights, decreasing = TRUE)[seq_len(min(length(weights), n_top))]
   spectrum <- apply(x[idx, , drop = FALSE], 2, stats::median, na.rm = TRUE)
-  display_positive(display_smooth(spectrum, max_k = 15L))
+  display_component_shape(spectrum, max_k = 17L)
 }
 
 pick_default_cube <- function() {
@@ -593,7 +609,7 @@ spectra_df <- bind_rows(
   group_by(model, component) |>
   mutate(
     raw_value = display_positive(value),
-    smooth_value = display_positive(display_smooth(value, max_k = 17L))
+    smooth_value = display_component_shape(value, max_k = 17L)
   ) |>
   ungroup() |>
   mutate(
