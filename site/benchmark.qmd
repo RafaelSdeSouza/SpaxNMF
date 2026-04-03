@@ -1,0 +1,78 @@
+---
+title: "Benchmark"
+---
+
+```{r}
+summary_path <- "data/ngc1512-benchmark-summary.csv"
+component_path <- "data/ngc1512-benchmark-components.csv"
+bench <- if (file.exists(summary_path)) read.csv(summary_path, stringsAsFactors = FALSE) else NULL
+bench_components <- if (file.exists(component_path)) read.csv(component_path, stringsAsFactors = FALSE) else NULL
+```
+
+## Real-Cube Benchmark
+
+This benchmark uses `NGC1512_cube_mockGCs.fits`, a mixed cube containing
+extended galaxy structure, compact GC-like sources, and sky contamination in
+the same field. The current benchmark is designed to answer two questions:
+
+1. How much reconstruction quality is lost relative to PCA?
+2. Does the mixed smooth+sparse spatial prior produce more concentrated compact components than vanilla NMF?
+
+<div class="benchmark-note">
+The benchmark uses outer-spaxel sky subtraction, weighted spatial smoothing for
+extended components, and sparse priors for the designated compact components.
+</div>
+
+## Current Figure
+
+If the benchmark outputs are present in the repository, the latest figure is
+shown below.
+
+```{r}
+if (file.exists("images/ngc1512-benchmark.png")) {
+  knitr::include_graphics("images/ngc1512-benchmark.png")
+} else {
+  cat("Benchmark figure not found in `site/images/ngc1512-benchmark.png`.\n")
+}
+```
+
+## Summary Metrics
+
+```{r}
+if (!is.null(bench)) {
+  bench$mse <- signif(bench$mse, 4)
+  bench$mean_top1pct <- signif(bench$mean_top1pct, 4)
+  bench$mean_top5pct <- signif(bench$mean_top5pct, 4)
+  bench$sparse_top1pct <- signif(bench$sparse_top1pct, 4)
+  bench$sparse_top5pct <- signif(bench$sparse_top5pct, 4)
+  knitr::kable(
+    bench[, c("model", "mse", "mean_top1pct", "mean_top5pct", "sparse_top1pct", "sparse_top5pct")],
+    caption = "Current NGC1512 benchmark summary."
+  )
+} else {
+  cat("Benchmark summary CSV not found.\n")
+}
+```
+
+`mean_top1pct` and `mean_top5pct` measure how much component-weight mass is
+carried by the brightest 1% or 5% of map pixels. Higher values indicate more
+concentrated maps. For the designated sparse components, the
+`sparse_top1pct` and `sparse_top5pct` columns isolate that concentration test.
+
+## Recommended Settings
+
+The current benchmark run uses:
+
+- `k = 8`
+- outer-spaxel sky subtraction
+- `lambda_smooth` for spectral regularization
+- Gaussian spatial coupling for smooth components
+- sparse priors on the compact-source components
+
+## Interpretation
+
+PCA remains the strongest baseline for pure rank-\(k\) squared-error
+reconstruction, so the main question is not whether NMF beats PCA on MSE alone.
+The relevant question is whether spatial NMF preserves acceptable
+reconstruction quality while yielding cleaner and more interpretable
+component-weight maps.

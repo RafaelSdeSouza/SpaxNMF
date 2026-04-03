@@ -4,6 +4,10 @@ title: "IFU Workflow"
 
 ## FITS to matrix
 
+SpaxNMF expects a spaxel-by-wavelength matrix. For a FITS cube, the standard
+workflow is to read the cube, reshape it, and clean invalid values before
+fitting.
+
 ```{r, eval = FALSE}
 library(FITSio)
 library(SpaxNMF)
@@ -24,7 +28,7 @@ plot(fit, type = "maps", nx = dim(X$imDat)[1], ny = dim(X$imDat)[2])
 plot_reconstruction(fit, Mat, n = 6)
 ```
 
-Example spatial maps from the bundled synthetic cube:
+Example component-weight maps from the bundled synthetic cube:
 
 ![](images/simulated-maps.png)
 
@@ -46,7 +50,7 @@ resid <- residuals(
 )
 ```
 
-## Metadata and redshift
+## Metadata
 
 When the input to `cube_to_matrix()` is a FITS-like list object, non-image
 entries are carried forward as metadata. That metadata can be recovered from
@@ -65,3 +69,14 @@ preserved as metadata and can be carried into fitted and reconstructed outputs.
 
 Public LOGCUBE products can be used to compare PCA, vanilla NMF, and spatial
 NMF on the same target after matched preprocessing.
+
+## Benchmark script
+
+The repository also includes a real-cube diagnostic script that applies the
+same preprocessing and figure style to external FITS cubes:
+
+```bash
+SPAXNMF_REAL_CUBE=/path/to/cube.fits \
+SPAXNMF_REAL_OUTPUT=site/images/real-benchmark.png \
+Rscript scripts/render_real_manga_diagnostic.R
+```

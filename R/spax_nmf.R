@@ -6,7 +6,7 @@
 #' The factorization follows the linear mixing model
 #' \deqn{X \approx A S}
 #' where rows of \eqn{X} correspond to spectra from individual spatial elements,
-#' \eqn{A} contains non-negative abundance weights, and \eqn{S} contains
+#' \eqn{A} contains non-negative component weights, and \eqn{S} contains
 #' non-negative spectral components.
 #'
 #' @param x Numeric matrix-like object with spectra in rows and wavelength
@@ -15,7 +15,7 @@
 #' @param lambda_smooth Non-negative weight for the first-difference smoothness
 #'   penalty applied to the recovered spectra.
 #' @param lambda_spatial Non-negative weight for the grid-based smoothness
-#'   penalty applied to the recovered spatial abundances.
+#'   penalty applied to the recovered component-weight maps.
 #' @param lambda_sparse Non-negative weight for an L1 sparsity penalty applied
 #'   to selected spatial abundance columns.
 #' @param spatial_sigma Positive kernel width in spaxels for the Gaussian
@@ -42,7 +42,7 @@
 #'
 #' @return A list with class \code{"spax_nmf"} containing:
 #' \itemize{
-#'   \item \code{spatial}: abundance matrix with one column per component.
+#'   \item \code{spatial}: component-weight matrix with one column per component.
 #'   \item \code{abundance}: alias of \code{spatial}.
 #'   \item \code{spectra}: component spectra with one row per component.
 #'   \item \code{basis}: component spectra arranged as wavelength-by-component.
@@ -438,7 +438,7 @@ component_reconstruction <- function(fit, component = 1, nx = NULL, ny = NULL) {
 #' @param noise Standard deviation of additive Gaussian noise.
 #'
 #' @return A list with the simulated \code{cube}, its matrix form, the true
-#' component \code{spectra}, abundance maps \code{abundances}, wavelength grid,
+#' component \code{spectra}, component-weight maps \code{abundances}, wavelength grid,
 #' and spatial dimensions.
 #' @examples
 #' demo <- simulate_ifu_cube()
@@ -715,7 +715,7 @@ residuals.spax_nmf <- function(object, x, nx = NULL, ny = NULL, ...) {
 
 #' Predict From a Fitted Spectral Unmixing Model
 #'
-#' Uses the fitted component spectra to estimate abundance weights for new data,
+#' Uses the fitted component spectra to estimate component weights for new data,
 #' or returns the in-sample reconstruction when \code{newdata} is omitted.
 #'
 #' @param object Result from [spax_nmf()].
@@ -725,10 +725,10 @@ residuals.spax_nmf <- function(object, x, nx = NULL, ny = NULL, ...) {
 #' @param nx Optional x-axis size for cube output.
 #' @param ny Optional y-axis size for cube output.
 #' @param lambda_spatial Non-negative weight for the spatial smoothness penalty
-#'   when estimating abundance weights for new data. If \code{NULL}, the fitted
+#'   when estimating component weights for new data. If \code{NULL}, the fitted
 #'   object's spatial penalties are reused.
 #' @param lambda_sparse Non-negative weight for the sparsity penalty when
-#'   estimating abundance weights for new data. If \code{NULL}, the fitted
+#'   estimating component weights for new data. If \code{NULL}, the fitted
 #'   object's sparsity penalties are reused.
 #' @param spatial_sigma Positive kernel width in spaxels for the Gaussian
 #'   spatial weighting used during abundance estimation.
@@ -736,7 +736,7 @@ residuals.spax_nmf <- function(object, x, nx = NULL, ny = NULL, ...) {
 #'   spatial smoothness prior when \code{lambda_spatial} is scalar.
 #' @param sparse_components Optional component indices that should receive the
 #'   sparsity prior when \code{lambda_sparse} is scalar.
-#' @param lr Learning rate used when estimating abundance weights for new data.
+#' @param lr Learning rate used when estimating component weights for new data.
 #' @param niter Number of optimization iterations for new data.
 #' @param cuda Logical; if \code{TRUE}, request CUDA execution.
 #' @param verbose Logical; if \code{TRUE}, emit progress every 100 iterations.

@@ -2,34 +2,40 @@
 title: "Reference"
 ---
 
-## Model fitting
+## Fitting
 
-- `spax_nmf()`
-- `summary()`
-- `print()`
+- `spax_nmf()`: fit the regularized non-negative matrix factorization model.
+- `summary()`: report rank, dimensions, iteration count, and final loss.
+- `print()`: compact display of the fitted object.
 
-## Accessors
+## Matrix and Cube Helpers
 
-- `basis()`
-- `coef()`
-- `fitted()`
-- `predict()`
-- `residuals()`
+- `cube_to_matrix()`: reshape an IFU cube into a spaxel-by-wavelength matrix.
+- `matrix_to_cube()`: convert a matrix reconstruction back into cube form.
+- `cube_metadata()`: recover metadata carried through reshaping and fitting.
 
-## Cube helpers
+## Components
 
-- `cube_to_matrix()`
-- `matrix_to_cube()`
-- `component_map()`
-- `component_spectrum()`
-- `component_reconstruction()`
+- `component_map()`: extract a single component-weight map.
+- `component_spectrum()`: extract one recovered component spectrum.
+- `component_reconstruction()`: isolate the reconstruction from one component.
+
+## Model Methods
+
+- `basis()`: return spectra as wavelength-by-component.
+- `coef()`: return component weights as component-by-spaxel.
+- `fitted()`: recover the full reconstruction.
+- `predict()`: infer component weights or reconstructions for new data.
+- `residuals()`: compute data minus model.
 
 ## Visualization
 
-- `plot()`
-- `plot_reconstruction()`
+- `plot(type = "spectra")`: inspect recovered component spectra.
+- `plot(type = "maps")`: inspect component-weight maps.
+- `plot(type = "loss")`: inspect optimization behavior.
+- `plot_reconstruction()`: compare observed and reconstructed spectra.
 
-## Examples
+## Reproducible Examples
 
-- `simulate_ifu_cube()`
-- `demo_ifu_unmix()`
+- `simulate_ifu_cube()`: bundled synthetic IFU example.
+- `demo_ifu_unmix()`: compact demonstration of the standard workflow.

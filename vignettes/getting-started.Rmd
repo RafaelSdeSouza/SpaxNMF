@@ -28,7 +28,7 @@ dim(demo$matrix)
 
 ## Fit the model
 
-The core function estimates abundance maps and component spectra using a smooth
+The core function estimates component-weight maps and component spectra using a smooth
 non-negative matrix factorization.
 
 ```{r, eval = FALSE}

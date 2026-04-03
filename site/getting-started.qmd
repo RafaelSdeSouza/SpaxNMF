@@ -6,20 +6,31 @@ title: "Getting Started"
 library(SpaxNMF)
 ```
 
-## Simulated example
+## Quick Start
+
+The example below uses the bundled synthetic IFU cube to illustrate the basic
+workflow from matrix input to interpreted component spectra and maps.
 
 ```{r, eval = FALSE}
 demo <- simulate_ifu_cube(nx = 16, ny = 16, n_wave = 100)
+```
+
+## Fit the model
+
+```{r, eval = FALSE}
 fit <- spax_nmf(
   demo$matrix,
   k = 3,
   lambda_smooth = 0.02,
+  lambda_spatial = 0.01,
+  nx = demo$nx,
+  ny = demo$ny,
   niter = 300,
   lr = 0.03
 )
 ```
 
-## Standard interface
+## Inspect the fit
 
 ```{r, eval = FALSE}
 print(fit)
@@ -28,7 +39,7 @@ basis(fit)
 coef(fit)
 ```
 
-## Plots
+## Plot the outputs
 
 ```{r, eval = FALSE}
 plot(fit, type = "spectra", wavelength = demo$wavelength)
@@ -37,7 +48,7 @@ plot(fit, type = "loss")
 plot_reconstruction(fit, demo$matrix, n = 4, wavelength = demo$wavelength)
 ```
 
-### Example figures
+## Example figures
 
 Component spectra:
 
@@ -56,6 +67,7 @@ Observed versus reconstructed spectra:
 - `fit$spatial` contains one component weight per spaxel and per component.
 - `fit$spectra` contains the recovered component spectra.
 - `fit$reconstruction` is the model approximation `A %*% S`.
+- `fit$loss` stores the optimization history.
 - `fitted(fit, nx, ny)` and `predict(fit, type = "cube", nx, ny)` reshape that
   reconstruction back into a cube.
 - `residuals(fit, x = ...)` returns data minus reconstruction.

@@ -9,7 +9,7 @@
 #'   \item simulate or ingest a spectral cube;
 #'   \item reshape it with [cube_to_matrix()];
 #'   \item fit a low-rank unmixing model with [spax_nmf()];
-#'   \item inspect component spectra and abundance maps.
+#'   \item inspect component spectra and component-weight maps.
 #' }
 #'
 #' @docType package

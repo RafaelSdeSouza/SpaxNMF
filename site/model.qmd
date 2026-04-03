@@ -1,0 +1,110 @@
+---
+title: "Model"
+---
+
+## Overview
+
+SpaxNMF represents an IFU cube as a matrix \(X \in \mathbb{R}_{\ge 0}^{n \times p}\),
+with one row per spaxel and one column per wavelength channel. The model seeks
+a low-rank non-negative factorization
+
+$$
+X \approx AS
+$$
+
+where:
+
+- \(A \in \mathbb{R}_{\ge 0}^{n \times k}\) contains component weights for each spaxel
+- \(S \in \mathbb{R}_{\ge 0}^{k \times p}\) contains the component spectra
+- \(k\) is the chosen factorization rank
+
+`A` should be interpreted as a set of component-weight maps, not as chemical
+abundances.
+
+## Objective Function
+
+The current implementation minimizes
+
+$$
+\mathcal{L}(A,S)=
+\|X-AS\|_F^2
++\lambda_S \|DS\|_F^2
++\sum_c \lambda_{A,c}\sum_{i,j} w_{ij}(A_{ic}-A_{jc})^2
++\sum_c \lambda_{C,c}\|A_{:,c}\|_1
+$$
+
+with Gaussian spatial couplings
+
+$$
+w_{ij} = \exp\left(-\frac{d_{ij}^2}{2\sigma^2}\right).
+$$
+
+<div class="feature-grid">
+<div class="feature-card">
+<h3>Reconstruction term</h3>
+<p>
+\(\|X-AS\|_F^2\) matches the model to the observed spectra.
+</p>
+</div>
+<div class="feature-card">
+<h3>Spectral smoothness</h3>
+<p>
+\(\lambda_S \|DS\|_F^2\) penalizes channel-to-channel roughness in the recovered
+component spectra.
+</p>
+</div>
+<div class="feature-card">
+<h3>Spatial coherence</h3>
+<p>
+\(\lambda_{A,c}\) controls how strongly nearby spaxels are encouraged to carry
+similar weights for component \(c\).
+</p>
+</div>
+</div>
+
+## Why The Spatial Term Matters
+
+The spatial regularization does not smooth the spectra directly. It acts on the
+component weights in \(A\):
+
+$$
+\sum_{i,j} w_{ij}(A_{ic}-A_{jc})^2
+$$
+
+for each selected component \(c\). In practice this:
+
+- suppresses salt-and-pepper weight maps
+- stabilizes the decomposition under noise
+- encourages extended components to remain spatially coherent
+- leaves distant spaxels free to differ because the kernel weight decays with distance
+
+## Compact-Source Components
+
+Selected components can also receive a sparsity prior
+
+$$
+\|A_{:,c}\|_1
+$$
+
+which is useful when a component is expected to be compact rather than smooth.
+This is the mechanism currently used to test GC-like components against a
+smooth galaxy/background decomposition.
+
+## Optimization
+
+The torch implementation follows a simple projected-gradient strategy:
+
+1. Initialize \(A\) and \(S\) randomly with positive entries.
+2. Optimize the loss with Adam.
+3. Clamp \(A\) and \(S\) to remain non-negative after each step.
+4. Return spectra, component weights, and the reconstruction \(AS\).
+
+## Sanity Checks
+
+The current tests enforce two baseline conditions:
+
+- setting `lambda_spatial = 0` recovers the original smooth NMF objective
+- adding sparse priors improves recovery of compact-source components on a synthetic IFU mock
+
+See [Getting Started](getting-started.qmd) for code examples and
+[Benchmark](benchmark.qmd) for the current real-cube test.
