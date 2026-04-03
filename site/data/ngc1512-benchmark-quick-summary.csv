@@ -1,0 +1,4 @@
+"model","mse","mean_top1pct","mean_top5pct","sparse_top1pct","sparse_top5pct","cube","k","sky_mode","lambda_smooth","lambda_spatial","lambda_sparse"
+"PCA",1.88659763318179e-06,NA,NA,NA,NA,"NGC1512_cube_mockGCs.fits",8,"outer",0.001,NA,NA
+"Vanilla NMF",0.00207346724365404,0.0497558279086754,0.229671937492902,0.0474166145256164,0.220436087905889,"NGC1512_cube_mockGCs.fits",8,"outer",0.001,0,0
+"Spatial NMF",0.00196031580796157,0.0513752171578099,0.236549578134478,0.0544226285892087,0.250364837681769,"NGC1512_cube_mockGCs.fits",8,"outer",0.001,0.002,0.01
