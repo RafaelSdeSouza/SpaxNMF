@@ -230,11 +230,38 @@ component_concentration <- function(spatial, nx, ny, fraction = 0.01) {
   }, numeric(1))
 }
 
-top_weight_spectrum <- function(x, weights, fraction = 0.01) {
-  n_top <- max(1L, ceiling(length(weights) * fraction))
-  idx <- order(weights, decreasing = TRUE)[seq_len(min(length(weights), n_top))]
-  spectrum <- apply(x[idx, , drop = FALSE], 2, stats::median, na.rm = TRUE)
-  display_component_shape(spectrum, max_k = 17L)
+component_peak_summary <- function(x,
+                                   weights,
+                                   nx,
+                                   ny,
+                                   radius = 2,
+                                   annulus_inner = 4,
+                                   annulus_outer = 7) {
+  peak_idx <- which.max(weights)
+  peak_coord <- arrayInd(peak_idx, .dim = c(nx, ny))
+  coords <- expand.grid(ix = seq_len(nx), iy = seq_len(ny))
+  distance <- sqrt((coords$ix - peak_coord[1])^2 + (coords$iy - peak_coord[2])^2)
+
+  aperture_idx <- which(distance <= radius)
+  annulus_idx <- which(distance > annulus_inner & distance <= annulus_outer)
+
+  aperture_spec <- apply(x[aperture_idx, , drop = FALSE], 2, stats::median, na.rm = TRUE)
+  background_spec <- if (length(annulus_idx)) {
+    apply(x[annulus_idx, , drop = FALSE], 2, stats::median, na.rm = TRUE)
+  } else {
+    rep(0, ncol(x))
+  }
+
+  excess_spec <- aperture_spec - background_spec
+
+  list(
+    peak_idx = peak_idx,
+    peak_x = peak_coord[1],
+    peak_y = peak_coord[2],
+    aperture = aperture_spec,
+    background = background_spec,
+    excess = excess_spec
+  )
 }
 
 pick_default_cube <- function() {
@@ -636,33 +663,6 @@ residual_df <- bind_rows(
     model = factor(model, levels = c("PCA", "Vanilla NMF", "Spatial NMF"))
   )
 
-example_spaxels <- pick_example_spaxels(
-  real_cube$matrix,
-  nx = real_cube$nx,
-  ny = real_cube$ny,
-  valid_spaxels = real_cube$valid_spaxels,
-  n = 3,
-  preferred = if (is.null(real_cube$sky)) integer() else real_cube$sky$example_spaxel
-)
-
-example_df <- bind_rows(lapply(seq_along(example_spaxels), function(ii) {
-  idx <- example_spaxels[ii]
-  coord <- arrayInd(idx, .dim = c(real_cube$nx, real_cube$ny))
-  tibble(
-    wavelength = real_cube$wavelength,
-    observed = real_cube$matrix[idx, ],
-    pca = fit_pca$reconstruction[idx, ],
-    vanilla = fit_vanilla$reconstruction[idx, ],
-    spatial = fit_spatial$reconstruction[idx, ],
-    spaxel = sprintf("Spaxel (%d, %d)", coord[1], coord[2])
-  ) |>
-    pivot_longer(
-      cols = c("observed", "pca", "vanilla", "spatial"),
-      names_to = "model",
-      values_to = "value"
-    )
-}))
-
 pca_mse <- mean((real_cube$matrix - fit_pca$reconstruction)^2)
 vanilla_mse <- mean((real_cube$matrix - fit_vanilla$reconstruction)^2)
 spatial_mse <- mean((real_cube$matrix - fit_spatial$reconstruction)^2)
@@ -756,13 +756,91 @@ focus_basis_df <- spectra_df |>
     panel_label = factor(focus_labels[as.character(component)], levels = focus_panel_levels)
   )
 
-focus_observed_df <- bind_rows(lapply(focus_idx, function(i) {
+candidate_peak_meta <- bind_rows(lapply(focus_idx, function(i) {
+  vanilla_peak <- component_peak_summary(
+    real_cube$matrix,
+    fit_vanilla$spatial[, i],
+    nx = real_cube$nx,
+    ny = real_cube$ny
+  )
+  spatial_peak <- component_peak_summary(
+    real_cube$matrix,
+    fit_spatial$spatial[, i],
+    nx = real_cube$nx,
+    ny = real_cube$ny
+  )
+
+  bind_rows(
+    tibble(
+      model = "Vanilla NMF",
+      component = component_names[i],
+      peak_idx = vanilla_peak$peak_idx,
+      peak_x = vanilla_peak$peak_x,
+      peak_y = vanilla_peak$peak_y,
+      spectrum = list(vanilla_peak$excess)
+    ),
+    tibble(
+      model = "Spatial NMF",
+      component = component_names[i],
+      peak_idx = spatial_peak$peak_idx,
+      peak_x = spatial_peak$peak_x,
+      peak_y = spatial_peak$peak_y,
+      spectrum = list(spatial_peak$excess)
+    )
+  )
+})) |>
+  mutate(
+    model = factor(model, levels = c("Vanilla NMF", "Spatial NMF")),
+    component = factor(component, levels = focus_components),
+    panel_label = factor(focus_labels[as.character(component)], levels = focus_panel_levels),
+    peak_label = sprintf("Peak (%d, %d)", peak_x, peak_y)
+  )
+
+candidate_peak_df <- bind_rows(lapply(seq_len(nrow(candidate_peak_meta)), function(i) {
   tibble(
     wavelength = real_cube$wavelength,
-    value = top_weight_spectrum(real_cube$matrix, fit_spatial$spatial[, i], fraction = 0.01),
-    component = factor(component_names[i], levels = focus_components),
-    panel_label = factor(focus_labels[[component_names[i]]], levels = focus_panel_levels)
+    value = display_component_shape(unlist(candidate_peak_meta$spectrum[[i]]), max_k = 17L),
+    model = candidate_peak_meta$model[i],
+    component = candidate_peak_meta$component[i],
+    panel_label = candidate_peak_meta$panel_label[i],
+    peak_label = candidate_peak_meta$peak_label[i]
   )
+}))
+
+candidate_peak_annot <- candidate_peak_meta |>
+  mutate(
+    x = max(real_cube$wavelength) - 0.03 * diff(range(real_cube$wavelength)),
+    y = c(1.03, 0.91)[as.integer(model)],
+    label = peak_label
+  )
+
+example_spaxels <- unique(c(
+  which.max(as.vector(real_cube$flux_map)),
+  candidate_peak_meta$peak_idx[candidate_peak_meta$model == "Spatial NMF"]
+))
+example_spaxels <- example_spaxels[seq_len(min(3L, length(example_spaxels)))]
+
+example_df <- bind_rows(lapply(seq_along(example_spaxels), function(ii) {
+  idx <- example_spaxels[ii]
+  coord <- arrayInd(idx, .dim = c(real_cube$nx, real_cube$ny))
+  label <- if (ii == 1L) {
+    sprintf("Galaxy peak (%d, %d)", coord[1], coord[2])
+  } else {
+    sprintf("Candidate peak (%d, %d)", coord[1], coord[2])
+  }
+  tibble(
+    wavelength = real_cube$wavelength,
+    observed = real_cube$matrix[idx, ],
+    pca = fit_pca$reconstruction[idx, ],
+    vanilla = fit_vanilla$reconstruction[idx, ],
+    spatial = fit_spatial$reconstruction[idx, ],
+    spaxel = label
+  ) |>
+    pivot_longer(
+      cols = c("observed", "pca", "vanilla", "spatial"),
+      names_to = "model",
+      values_to = "value"
+    )
 }))
 
 base_panel_theme <- theme(
@@ -788,7 +866,7 @@ map_pal <- c("#FFF7BC", "#FEC44F", "#FD8D3C", "#E6550D", "#A63603")
 
 p_examples <- ggplot(example_df, aes(wavelength, value, color = model)) +
   geom_line(linewidth = 0.95) +
-  facet_wrap(~ spaxel, nrow = 1) +
+  facet_wrap(~ spaxel, nrow = 1, scales = "free_y") +
   scale_color_manual(
     values = model_pal[c("observed", "pca", "vanilla", "spatial")],
     labels = c("Observed", "PCA", "Vanilla NMF", "Spatial NMF")
@@ -798,7 +876,7 @@ p_examples <- ggplot(example_df, aes(wavelength, value, color = model)) +
     expand = expansion(mult = c(0, 0))
   ) +
   labs(
-    title = if (is.null(real_cube$sky)) "Selected real-spaxel reconstructions" else "Selected sky-cleaned spaxel reconstructions",
+    title = if (is.null(real_cube$sky)) "Representative reconstructions at galaxy and candidate peaks" else "Representative sky-cleaned reconstructions at galaxy and candidate peaks",
     subtitle = sprintf(
       "k = %d | PCA MSE = %.6f | Vanilla = %.6f | Spatial = %.6f",
       k, pca_mse, vanilla_mse, spatial_mse
@@ -893,18 +971,10 @@ if (!is.null(real_cube$sky)) {
 }
 
 p_spectra <- ggplot(
-  focus_basis_df,
-  aes(wavelength, smooth_value, color = model)
+  candidate_peak_df,
+  aes(wavelength, value, color = model)
 ) +
   geom_line(linewidth = 1.15) +
-  geom_line(
-    data = focus_observed_df,
-    aes(wavelength, value),
-    inherit.aes = FALSE,
-    color = "#111111",
-    linewidth = 0.95,
-    linetype = "22"
-  ) +
   geom_text(
     data = focus_annotation,
     aes(x = x, y = y, label = label, color = model),
@@ -913,6 +983,15 @@ p_spectra <- ggplot(
     vjust = 1,
     size = 3.2,
     fontface = "bold",
+    show.legend = FALSE
+  ) +
+  geom_text(
+    data = candidate_peak_annot,
+    aes(x = x, y = y, label = label, color = model),
+    inherit.aes = FALSE,
+    hjust = 1,
+    vjust = 1,
+    size = 3.0,
     show.legend = FALSE
   ) +
   facet_wrap(~ panel_label, nrow = 1) +
@@ -927,9 +1006,9 @@ p_spectra <- ggplot(
     expand = expansion(mult = c(0, 0.02))
   ) +
   labs(
-    title = "Candidate compact-component spectra",
+    title = "Local peak-aperture spectra at compact candidates",
     subtitle = sprintf(
-      "Colored curves are recovered basis spectra; the dashed black line is the median sky-cleaned spectrum of the top 1%% spatial-NMF pixels for each candidate. %s",
+      "Each curve is the median spectrum in a small aperture around the candidate peak after subtracting a local annulus background. %s",
       focus_summary
     ),
     x = expression(lambda ~ "[" * A * "]"),
@@ -946,6 +1025,15 @@ p_maps <- ggplot(
   aes(ix, iy, fill = value)
 ) +
   geom_tile() +
+  geom_point(
+    data = candidate_peak_meta,
+    aes(peak_x, peak_y),
+    inherit.aes = FALSE,
+    shape = 4,
+    stroke = 0.9,
+    size = 2.2,
+    color = "#111111"
+  ) +
   facet_grid(model ~ panel_label) +
   scale_fill_gradientn(colors = map_pal, limits = c(0, 1), guide = "none") +
   coord_equal() +
@@ -1000,13 +1088,8 @@ p_resid <- ggplot(residual_df, aes(ix, iy, fill = value)) +
     plot.margin = margin(6, 6, 6, 6)
   )
 
-fig <- if (is.null(p_sky)) {
-  p_examples / p_spectra / p_maps / p_resid +
-    plot_layout(heights = c(0.9, 0.9, 1.4, 0.8))
-} else {
-  p_examples / p_sky / p_spectra / p_maps / p_resid +
-    plot_layout(heights = c(0.9, 0.8, 1.0, 1.1, 0.8))
-}
+fig <- p_examples / p_spectra / p_maps / p_resid +
+  plot_layout(heights = c(0.95, 1.0, 1.3, 0.75))
 
 fig <- fig +
   plot_annotation(
