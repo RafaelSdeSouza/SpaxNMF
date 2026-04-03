@@ -17,7 +17,7 @@ simulate_ifu_cube(nx = 20, ny = 20, n_wave = 120, noise = 0.01)
 }
 \value{
 A list with the simulated \code{cube}, its matrix form, the true
-component \code{spectra}, abundance maps \code{abundances}, wavelength grid,
+component \code{spectra}, component-weight maps \code{abundances}, wavelength grid,
 and spatial dimensions.
 }
 \description{

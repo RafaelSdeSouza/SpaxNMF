@@ -12,6 +12,5 @@
 #'   \item inspect component spectra and component-weight maps.
 #' }
 #'
-#' @docType package
-#' @name SpaxNMF
-NULL
+#' @keywords internal
+"_PACKAGE"

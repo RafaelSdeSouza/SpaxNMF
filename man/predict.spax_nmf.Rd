@@ -14,6 +14,11 @@
   niter = 500,
   cuda = FALSE,
   verbose = FALSE,
+  lambda_spatial = NULL,
+  lambda_sparse = NULL,
+  spatial_sigma = NULL,
+  smooth_components = NULL,
+  sparse_components = NULL,
   ...
 )
 }
@@ -29,7 +34,7 @@ or \code{"cube"}.}
 
 \item{ny}{Optional y-axis size for cube output.}
 
-\item{lr}{Learning rate used when estimating abundance weights for new data.}
+\item{lr}{Learning rate used when estimating component weights for new data.}
 
 \item{niter}{Number of optimization iterations for new data.}
 
@@ -37,13 +42,30 @@ or \code{"cube"}.}
 
 \item{verbose}{Logical; if \code{TRUE}, emit progress every 100 iterations.}
 
+\item{lambda_spatial}{Non-negative weight for the spatial smoothness penalty
+when estimating component weights for new data. If \code{NULL}, the fitted
+object's spatial penalties are reused.}
+
+\item{lambda_sparse}{Non-negative weight for the sparsity penalty when
+estimating component weights for new data. If \code{NULL}, the fitted
+object's sparsity penalties are reused.}
+
+\item{spatial_sigma}{Positive kernel width in spaxels for the Gaussian
+spatial weighting used during abundance estimation.}
+
+\item{smooth_components}{Optional component indices that should receive the
+spatial smoothness prior when \code{lambda_spatial} is scalar.}
+
+\item{sparse_components}{Optional component indices that should receive the
+sparsity prior when \code{lambda_sparse} is scalar.}
+
 \item{...}{Unused.}
 }
 \value{
 A numeric matrix or cube, depending on \code{type}.
 }
 \description{
-Uses the fitted component spectra to estimate abundance weights for new data,
+Uses the fitted component spectra to estimate component weights for new data,
 or returns the in-sample reconstruction when \code{newdata} is omitted.
 }
 \examples{

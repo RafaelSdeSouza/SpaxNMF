@@ -59,6 +59,22 @@ carried by the brightest 1% or 5% of map pixels. Higher values indicate more
 concentrated maps. For the designated sparse components, the
 `sparse_top1pct` and `sparse_top5pct` columns isolate that concentration test.
 
+```{r}
+if (!is.null(bench)) {
+  vanilla_row <- bench[bench$model == "Vanilla NMF", , drop = FALSE]
+  spatial_row <- bench[bench$model == "Spatial NMF", , drop = FALSE]
+  cat(
+    sprintf(
+      "In the current saved run, spatial NMF improves the vanilla NMF reconstruction MSE from %.4g to %.4g, while increasing the designated sparse-component top-1%% concentration from %.3f to %.3f.",
+      vanilla_row$mse,
+      spatial_row$mse,
+      vanilla_row$sparse_top1pct,
+      spatial_row$sparse_top1pct
+    )
+  )
+}
+```
+
 ## Recommended Settings
 
 The current benchmark run uses:
