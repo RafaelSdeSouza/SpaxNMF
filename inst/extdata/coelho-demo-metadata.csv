@@ -1,5 +1,0 @@
-id,file,teff,logg,feh
-cool_giant,t03000_g-0.5_p00p00_sed.fits,3000,-0.5,0
-solar_dwarf,t05750_g+4.5_p00p04_sed.fits,5750,4.5,0
-a_star,t09000_g+4.5_p00p00_sed.fits,9000,4.5,0
-hot_star,t18000_g+4.5_p02p00_sed.fits,18000,4.5,0.2

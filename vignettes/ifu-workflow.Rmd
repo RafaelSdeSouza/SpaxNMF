@@ -22,7 +22,7 @@ any accompanying research note.
 The package assumes an `nx x ny x n_lambda` cube.
 
 ```{r}
-library(SpectralUnmix)
+library(SpaxNMF)
 
 demo <- simulate_ifu_cube()
 dim(demo$cube)
@@ -58,12 +58,12 @@ plot_reconstruction(fit, x, n = 4, wavelength = demo$wavelength)
 
 ## 5. Extend to real data
 
-For a paper-grade example, add one public IFU cube and document:
+For the next package demo layer, use one public MaNGA cube and document:
 
 1. preprocessing choices
 2. number of components
 3. smoothness regularization
-4. comparison baseline
+4. comparison baseline: PCA, vanilla NMF, and spatial NMF
 5. astrophysical interpretation of each component
 
 The synthetic workflow remains useful even after that, because it gives a

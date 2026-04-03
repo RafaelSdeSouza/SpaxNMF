@@ -1,9 +1,9 @@
 ---
-title: "SpectralUnmix"
+title: "SpaxNMF"
 ---
 
-`SpectralUnmix` is an R package for smooth non-negative spectral unmixing of
-hyperspectral datasets and astronomical IFU cubes.
+`SpaxNMF` is an R package for IFU cube decomposition with regularized
+non-negative matrix factorization.
 
 ::: {.hero-note}
 The package fits a low-rank model that decomposes a spectral matrix into
@@ -39,8 +39,8 @@ flowchart LR
 ## Interpretation
 
 Each spaxel spectrum is modeled as a non-negative combination of a small number
-of latent spectral components. The abundances vary across the field, while the
-component spectra are shared across all spaxels.
+of latent spectral components. The spatial weights vary across the field, while
+the component spectra are shared across all spaxels.
 
 ## Example output
 
@@ -57,11 +57,18 @@ synthetic example used throughout the documentation.
 - `fitted()`, `predict()`, and `residuals()` provide standard model methods.
 - `plot()` and `plot_reconstruction()` provide quick diagnostics.
 
+## Real-data direction
+
+The package is being cleaned up around a small set of MaNGA cube demos. The
+goal is to compare PCA, vanilla NMF, and future spatially aware NMF models
+using the same style of component-spectrum figure developed for the original
+unmixing work.
+
 ## Installation
 
 ```r
 # install.packages("remotes")
-remotes::install_github("RafaelSdeSouza/SpectralUnmix")
+remotes::install_github("RafaelSdeSouza/SpaxNMF")
 ```
 
 `torch` must be available in the local R installation.

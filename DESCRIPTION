@@ -1,6 +1,6 @@
-Package: SpectralUnmix
+Package: SpaxNMF
 Type: Package
-Title: Spectral Unmixing Methods for Hyperspectral and IFU Data
+Title: Regularized Non-negative Matrix Factorization for IFU Cubes
 Version: 0.1.0
 Authors@R: 
     person(
@@ -9,13 +9,12 @@ Authors@R:
       role = c("aut", "cre"),
       comment = c(ORCID = "0000-0001-7207-4584")
     )
-Description: SpectralUnmix provides tools for spectral–spatial decomposition of
-    hyperspectral datasets and integral field spectroscopy (IFU) cubes.
-    The package implements spectral unmixing methods based on non-negative
-    matrix factorization and related models to decompose a spectral cube
-    into spatial abundance maps and spectral components.
-    Optional spectral regularization can be applied to encourage smooth
-    physically meaningful spectra.
+Description: SpaxNMF provides tools for reshaping integral field spectroscopy
+    (IFU) cubes, fitting regularized non-negative matrix factorization
+    models, and inspecting recovered component spectra and spatial weights.
+    The package is being refocused around reproducible IFU demos and
+    comparisons between PCA, vanilla NMF, and future spatially aware NMF
+    models on MaNGA-like data.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Imports:
@@ -23,9 +22,11 @@ Imports:
 Suggests:
     knitr,
     rmarkdown,
+    testthat,
     viridis,
     ggplot2
+Config/testthat/edition: 3
 VignetteBuilder: knitr
-URL: https://github.com/RafaelSdeSouza/SpectralUnmix
-BugReports: https://github.com/RafaelSdeSouza/SpectralUnmix/issues
+URL: https://github.com/RafaelSdeSouza/SpaxNMF
+BugReports: https://github.com/RafaelSdeSouza/SpaxNMF/issues
 RoxygenNote: 7.3.3

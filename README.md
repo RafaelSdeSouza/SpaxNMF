@@ -1,9 +1,9 @@
-# SpectralUnmix
+# SpaxNMF
 
-`SpectralUnmix` is an R package for smooth non-negative spectral unmixing of
-hyperspectral data and astronomical integral-field spectroscopy (IFU) cubes.
-The package fits a low-rank model that decomposes a spectral matrix into
-non-negative component spectra and spatial abundance maps.
+`SpaxNMF` is an R package for IFU cube decomposition with regularized
+non-negative matrix factorization. The current package centers on reshaping
+cubes, fitting a baseline NMF model with smooth spectral components, and
+inspecting the recovered spatial maps and spectra.
 
 The model is
 
@@ -15,14 +15,14 @@ where `X` is a spaxel-by-wavelength matrix, `A` contains spatial abundances,
 and `S` contains component spectra.
 
 Each spaxel spectrum is represented as a non-negative combination of shared
-component spectra. The abundances vary across the field, while the component
+component spectra. The weights vary across the field, while the component
 spectra are global to the fit.
 
 ## Installation
 
 ```r
 # install.packages("remotes")
-remotes::install_github("RafaelSdeSouza/SpectralUnmix")
+remotes::install_github("RafaelSdeSouza/SpaxNMF")
 ```
 
 `torch` must be installed and configured in the local R environment.
@@ -30,7 +30,7 @@ remotes::install_github("RafaelSdeSouza/SpectralUnmix")
 ## Basic usage
 
 ```r
-library(SpectralUnmix)
+library(SpaxNMF)
 
 demo <- simulate_ifu_cube(nx = 16, ny = 16, n_wave = 100)
 
@@ -102,7 +102,7 @@ cube_hat <- predict(
   ny = dim(X$imDat)[2]
 )
 
-# recover stored FITS-side metadata such as headers or redshift if present
+# recover stored FITS-side metadata if present
 meta <- cube_metadata(cube_hat)
 ```
 
@@ -110,39 +110,16 @@ When `cube_to_matrix()` receives a FITS-like list object, it now carries
 non-image entries such as headers and other metadata through the matrix, the
 fitted object, and reconstructed cubes.
 
-## Real spectra demo
+## Roadmap
 
-```r
-real_demo <- coelho_demo_spectra()
-dim(real_demo$matrix)
-
-fit_real <- spectral_unmix(
-  real_demo$matrix,
-  k = 3,
-  lambda_smooth = 0.001,
-  niter = 400,
-  lr = 0.03
-)
-```
-
-## Stellar library subset
-
-```r
-stellar_lib <- coelho_stellar_subset()
-dim(stellar_lib$matrix)
-table(stellar_lib$metadata$type)
-
-fit_lib <- spectral_unmix(
-  stellar_lib$matrix,
-  k = 5,
-  lambda_smooth = 0.001,
-  niter = 500,
-  lr = 0.03
-)
-```
+The package is being cleaned up around one main use case: IFU demonstrations
+that compare what we learn from PCA, vanilla NMF, and a future spatially aware
+NMF model on public MaNGA cubes. The synthetic example stays in the package so
+the website and tests remain fast and reproducible, while the real-data demos
+will move toward a small set of curated MaNGA examples.
 
 ## Documentation
 
 Package articles are provided in the `vignettes/` directory.
 
-Website: [https://rafaelsdesouza.github.io/SpectralUnmix/](https://rafaelsdesouza.github.io/SpectralUnmix/)
+Website: [https://rafaelsdesouza.github.io/SpaxNMF/](https://rafaelsdesouza.github.io/SpaxNMF/)

@@ -1,6 +1,6 @@
 cff-version: 1.2.0
-message: "If you use SpectralUnmix, please cite the software release archived on Zenodo and the associated RNAAS article."
-title: "SpectralUnmix: A Torch-Based Regularized Non-negative Matrix Factorization"
+message: "If you use SpaxNMF, please cite the software release and the associated paper when available."
+title: "SpaxNMF: Regularized Non-negative Matrix Factorization for IFU Cubes"
 type: software
 authors:
   - family-names: "de Souza"
@@ -9,21 +9,21 @@ authors:
     affiliation: "University of Hertfordshire"
 identifiers:
   - type: url
-    value: "https://github.com/RafaelSdeSouza/SpectralUnmix"
-repository-code: "https://github.com/RafaelSdeSouza/SpectralUnmix"
+    value: "https://github.com/RafaelSdeSouza/SpaxNMF"
+repository-code: "https://github.com/RafaelSdeSouza/SpaxNMF"
 license: "MIT"
 version: "0.1.0"
 date-released: "2026-03-12"
 abstract: >-
-  SpectralUnmix is an R package for smooth non-negative spectral unmixing of
-  hyperspectral and astronomical IFU data. The package fits a regularized
-  factorization model and provides helpers for reshaping cubes, reconstructing
-  components, and preserving cube-side metadata through fitted outputs.
+  SpaxNMF is an R package for IFU cube decomposition with regularized
+  non-negative matrix factorization. The package provides helpers for
+  reshaping cubes, reconstructing components, and preserving cube-side
+  metadata through fitted outputs.
 keywords:
   - astronomy
-  - astroinformatics
+  - IFU spectroscopy
+  - MaNGA
   - R
   - torch
   - non-negative matrix factorization
-  - IFU spectroscopy
-  - hyperspectral imaging
+  - spectral decomposition

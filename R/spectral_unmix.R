@@ -1,4 +1,4 @@
-#' Spectral Unmixing for Hyperspectral and IFU Data
+#' Regularized NMF for IFU Data
 #'
 #' Fits a non-negative matrix factorization model with an optional smoothness
 #' penalty on the recovered spectra.
@@ -14,8 +14,23 @@
 #' @param k Number of components to estimate.
 #' @param lambda_smooth Non-negative weight for the first-difference smoothness
 #'   penalty applied to the recovered spectra.
+#' @param lambda_spatial Non-negative weight for the grid-based smoothness
+#'   penalty applied to the recovered spatial abundances.
+#' @param lambda_sparse Non-negative weight for an L1 sparsity penalty applied
+#'   to selected spatial abundance columns.
+#' @param spatial_sigma Positive kernel width in spaxels for the Gaussian
+#'   spatial weighting. Nearby spaxels receive stronger coupling than distant
+#'   ones.
+#' @param smooth_components Optional component indices that should receive the
+#'   spatial smoothness prior when \code{lambda_spatial} is scalar.
+#' @param sparse_components Optional component indices that should receive the
+#'   sparsity prior when \code{lambda_sparse} is scalar.
 #' @param lr Learning rate passed to \code{torch::optim_adam()}.
 #' @param niter Number of optimization iterations.
+#' @param nx Optional number of x-axis pixels. Required for spatial smoothing
+#'   when it cannot be inferred from \code{x}.
+#' @param ny Optional number of y-axis pixels. Required for spatial smoothing
+#'   when it cannot be inferred from \code{x}.
 #' @param center Logical; if \code{TRUE}, center wavelength channels before
 #'   fitting.
 #' @param scale Logical; if \code{TRUE}, scale wavelength channels before
@@ -45,14 +60,17 @@
 #' }
 #'
 #' @details
-#' This implementation is aimed at hyperspectral cubes and integral-field
-#' spectroscopy data after reshaping the spatial dimensions into a two-dimensional
-#' matrix of spaxels by wavelength. The objective function is
-#' \deqn{\|X - AS\|^2 + \lambda \|D S\|^2}
+#' This implementation is aimed at integral-field spectroscopy data after
+#' reshaping the spatial dimensions into a two-dimensional matrix of spaxels by
+#' wavelength. The objective function is
+#' \deqn{\|X - AS\|^2 + \lambda_S \|D S\|^2 + \sum_c \lambda_{A,c} \sum_{i,j} w_{ij}(A_{ic} - A_{jc})^2 + \sum_c \lambda_{C,c}\|A_{:,c}\|_1}
 #' where the second term penalizes rapid channel-to-channel variations in each
-#' component spectrum.
+#' component spectrum, the third penalizes sharp changes between nearby spatial
+#' pixels using Gaussian kernel weights \eqn{w_{ij}} when \code{nx} and
+#' \code{ny} are available, and the fourth promotes compact sparse spatial
+#' components when desired.
 #'
-#' For astronomy workflows, a typical sequence is:
+#' For the current package workflow, a typical sequence is:
 #' \enumerate{
 #'   \item reshape a cube with [cube_to_matrix()];
 #'   \item fit the model with \code{spectral_unmix()};
@@ -81,7 +99,14 @@ spectral_unmix <- function(x,
                            scale = FALSE,
                            cuda = FALSE,
                            verbose = FALSE,
-                           metadata = NULL) {
+                           metadata = NULL,
+                           lambda_spatial = 0,
+                           lambda_sparse = 0,
+                           spatial_sigma = 1,
+                           smooth_components = NULL,
+                           sparse_components = NULL,
+                           nx = NULL,
+                           ny = NULL) {
   if (!requireNamespace("torch", quietly = TRUE)) {
     stop("The 'torch' package must be installed to use spectral_unmix().", call. = FALSE)
   }
@@ -101,6 +126,10 @@ spectral_unmix <- function(x,
       lambda_smooth < 0) {
     stop("'lambda_smooth' must be a non-negative number.", call. = FALSE)
   }
+  if (!is.numeric(spatial_sigma) || length(spatial_sigma) != 1L || is.na(spatial_sigma) ||
+      spatial_sigma <= 0) {
+    stop("'spatial_sigma' must be a positive number.", call. = FALSE)
+  }
   if (!is.numeric(lr) || length(lr) != 1L || is.na(lr) || lr <= 0) {
     stop("'lr' must be a positive number.", call. = FALSE)
   }
@@ -109,6 +138,20 @@ spectral_unmix <- function(x,
   }
   niter <- as.integer(niter)
 
+  lambda_spatial_weights <- resolve_component_penalty(
+    lambda_spatial,
+    k = k,
+    active_components = smooth_components,
+    name = "lambda_spatial"
+  )
+  lambda_sparse_weights <- resolve_component_penalty(
+    lambda_sparse,
+    k = k,
+    active_components = sparse_components,
+    name = "lambda_sparse"
+  )
+
+  spatial_dims <- resolve_spatial_dims(x, nx = nx, ny = ny, lambda_spatial = lambda_spatial_weights)
   x <- base::scale(x, center = center, scale = scale)
   cen <- attr(x, "scaled:center")
   sc <- attr(x, "scaled:scale")
@@ -129,6 +172,11 @@ spectral_unmix <- function(x,
 
   n_spectra <- nrow(x)
   n_wave <- ncol(x)
+  spatial_graph <- build_spatial_graph(
+    spatial_dims,
+    n_expected = n_spectra,
+    spatial_sigma = spatial_sigma
+  )
 
   A <- torch::torch_rand(n_spectra, k, device = device, requires_grad = TRUE)
   S <- torch::torch_rand(k, n_wave, device = device, requires_grad = TRUE)
@@ -149,7 +197,18 @@ spectral_unmix <- function(x,
       smooth <- torch::torch_tensor(0, device = device)
     }
 
-    loss <- recon + lambda_smooth * smooth
+    spatial_smooth <- spatial_penalty(
+      A,
+      spatial_graph,
+      device = device,
+      component_weights = lambda_spatial_weights
+    )
+    sparse_abundance <- sparse_penalty(
+      A,
+      device = device,
+      component_weights = lambda_sparse_weights
+    )
+    loss <- recon + lambda_smooth * smooth + spatial_smooth + sparse_abundance
     loss$backward()
     opt$step()
 
@@ -176,6 +235,15 @@ spectral_unmix <- function(x,
     fitted = reconstruction,
     loss = loss_history,
     metadata = input_metadata,
+    spatial_dims = spatial_dims,
+    lambda_smooth = lambda_smooth,
+    lambda_spatial = lambda_spatial,
+    lambda_spatial_weights = lambda_spatial_weights,
+    lambda_sparse = lambda_sparse,
+    lambda_sparse_weights = lambda_sparse_weights,
+    spatial_sigma = spatial_sigma,
+    smooth_components = which(lambda_spatial_weights > 0),
+    sparse_components = which(lambda_sparse_weights > 0),
     center = if (is.null(cen)) FALSE else cen,
     scale = if (is.null(sc)) FALSE else sc,
     call = match.call()
@@ -517,7 +585,7 @@ summary.spectral_unmix <- function(object, ...) {
 
 #' @export
 print.summary.spectral_unmix <- function(x, ...) {
-  cat("SpectralUnmix summary\n")
+  cat("SpaxNMF summary\n")
   cat(sprintf("  spaxels: %d\n", x$n_spaxels))
   cat(sprintf("  wavelength channels: %d\n", x$n_wave))
   cat(sprintf("  components: %d\n", x$rank))
@@ -652,6 +720,18 @@ residuals.spectral_unmix <- function(object, x, nx = NULL, ny = NULL, ...) {
 #'   or \code{"cube"}.
 #' @param nx Optional x-axis size for cube output.
 #' @param ny Optional y-axis size for cube output.
+#' @param lambda_spatial Non-negative weight for the spatial smoothness penalty
+#'   when estimating abundance weights for new data. If \code{NULL}, the fitted
+#'   object's spatial penalties are reused.
+#' @param lambda_sparse Non-negative weight for the sparsity penalty when
+#'   estimating abundance weights for new data. If \code{NULL}, the fitted
+#'   object's sparsity penalties are reused.
+#' @param spatial_sigma Positive kernel width in spaxels for the Gaussian
+#'   spatial weighting used during abundance estimation.
+#' @param smooth_components Optional component indices that should receive the
+#'   spatial smoothness prior when \code{lambda_spatial} is scalar.
+#' @param sparse_components Optional component indices that should receive the
+#'   sparsity prior when \code{lambda_sparse} is scalar.
 #' @param lr Learning rate used when estimating abundance weights for new data.
 #' @param niter Number of optimization iterations for new data.
 #' @param cuda Logical; if \code{TRUE}, request CUDA execution.
@@ -676,6 +756,11 @@ predict.spectral_unmix <- function(object,
                                    niter = 500,
                                    cuda = FALSE,
                                    verbose = FALSE,
+                                   lambda_spatial = NULL,
+                                   lambda_sparse = NULL,
+                                   spatial_sigma = NULL,
+                                   smooth_components = NULL,
+                                   sparse_components = NULL,
                                    ...) {
   if (!inherits(object, "spectral_unmix")) {
     stop("'object' must be a result from spectral_unmix().", call. = FALSE)
@@ -719,6 +804,57 @@ predict.spectral_unmix <- function(object,
   if (!is.numeric(niter) || length(niter) != 1L || is.na(niter) || niter < 1L) {
     stop("'niter' must be a positive integer.", call. = FALSE)
   }
+  if (is.null(spatial_sigma)) {
+    spatial_sigma <- object$spatial_sigma
+    if (is.null(spatial_sigma)) {
+      spatial_sigma <- 1
+    }
+  }
+  if (!is.numeric(spatial_sigma) || length(spatial_sigma) != 1L || is.na(spatial_sigma) ||
+      spatial_sigma <= 0) {
+    stop("'spatial_sigma' must be a positive number.", call. = FALSE)
+  }
+
+  if (is.null(lambda_spatial)) {
+    if (!is.null(object$lambda_spatial_weights)) {
+      lambda_spatial_weights <- object$lambda_spatial_weights
+    } else {
+      lambda_spatial_weights <- resolve_component_penalty(
+        object$lambda_spatial,
+        k = nrow(object$spectra),
+        name = "lambda_spatial"
+      )
+    }
+  } else {
+    lambda_spatial_weights <- resolve_component_penalty(
+      lambda_spatial,
+      k = nrow(object$spectra),
+      active_components = smooth_components,
+      name = "lambda_spatial"
+    )
+  }
+
+  if (is.null(lambda_sparse)) {
+    if (!is.null(object$lambda_sparse_weights)) {
+      lambda_sparse_weights <- object$lambda_sparse_weights
+    } else {
+      lambda_sparse_weights <- rep(0, nrow(object$spectra))
+    }
+  } else {
+    lambda_sparse_weights <- resolve_component_penalty(
+      lambda_sparse,
+      k = nrow(object$spectra),
+      active_components = sparse_components,
+      name = "lambda_sparse"
+    )
+  }
+
+  spatial_dims <- resolve_spatial_dims(newdata, nx = nx, ny = ny, lambda_spatial = lambda_spatial_weights)
+  spatial_graph <- build_spatial_graph(
+    spatial_dims,
+    n_expected = nrow(newdata),
+    spatial_sigma = spatial_sigma
+  )
 
   device <- select_torch_device(cuda)
   X <- torch::torch_tensor(as.matrix(newdata), device = device)
@@ -729,7 +865,19 @@ predict.spectral_unmix <- function(object,
   for (i in seq_len(as.integer(niter))) {
     opt$zero_grad()
     Xhat <- A$matmul(S_fixed)
-    loss <- torch::torch_mean((X - Xhat)^2)
+    recon <- torch::torch_mean((X - Xhat)^2)
+    spatial_smooth <- spatial_penalty(
+      A,
+      spatial_graph,
+      device = device,
+      component_weights = lambda_spatial_weights
+    )
+    sparse_abundance <- sparse_penalty(
+      A,
+      device = device,
+      component_weights = lambda_sparse_weights
+    )
+    loss <- recon + spatial_smooth + sparse_abundance
     loss$backward()
     opt$step()
     A$data()$clamp_(min = 0)
@@ -1047,4 +1195,213 @@ merge_metadata <- function(x, y) {
   }
 
   utils::modifyList(x, y)
+}
+
+resolve_spatial_dims <- function(x, nx = NULL, ny = NULL, lambda_spatial = 0) {
+  if (!is.null(nx) || !is.null(ny)) {
+    if (is.null(nx) || is.null(ny)) {
+      stop("Supply both 'nx' and 'ny' when providing spatial dimensions.", call. = FALSE)
+    }
+    if (!is.numeric(nx) || length(nx) != 1L || nx < 1L ||
+        !is.numeric(ny) || length(ny) != 1L || ny < 1L) {
+      stop("'nx' and 'ny' must be positive integers.", call. = FALSE)
+    }
+    return(c(as.integer(nx), as.integer(ny)))
+  }
+
+  dims <- attr(x, "spectral_unmix_dim", exact = TRUE)
+  if (!is.null(dims)) {
+    return(as.integer(dims))
+  }
+
+  metadata <- extract_matrix_metadata(x)
+  if (!is.null(metadata$dim_xy)) {
+    return(as.integer(metadata$dim_xy))
+  }
+
+  if (has_positive_penalty(lambda_spatial)) {
+    stop(
+      "Spatial smoothing requires grid dimensions. Supply 'nx' and 'ny', ",
+      "or fit from an object produced by cube_to_matrix().",
+      call. = FALSE
+    )
+  }
+
+  NULL
+}
+
+build_spatial_graph <- function(spatial_dims, n_expected = NULL, spatial_sigma = 1) {
+  if (is.null(spatial_dims)) {
+    return(NULL)
+  }
+
+  nx <- as.integer(spatial_dims[1L])
+  ny <- as.integer(spatial_dims[2L])
+  if (!is.null(n_expected) && nx * ny != n_expected) {
+    stop("Spatial dimensions do not match the number of spectra.", call. = FALSE)
+  }
+  if (!is.numeric(spatial_sigma) || length(spatial_sigma) != 1L || is.na(spatial_sigma) ||
+      spatial_sigma <= 0) {
+    stop("'spatial_sigma' must be a positive number.", call. = FALSE)
+  }
+
+  ids <- matrix(seq_len(nx * ny), nrow = nx, ncol = ny)
+  radius <- max(1L, as.integer(ceiling(3 * spatial_sigma)))
+  edges_i <- integer()
+  edges_j <- integer()
+  weights <- numeric()
+
+  for (dx in 0:radius) {
+    for (dy in (-radius):radius) {
+      if (dx == 0L && dy <= 0L) {
+        next
+      }
+      if (dx >= nx || abs(dy) >= ny) {
+        next
+      }
+
+      dist <- sqrt(dx^2 + dy^2)
+      if (dist > radius) {
+        next
+      }
+
+      x_from <- seq_len(nx - dx)
+      x_to <- x_from + dx
+
+      if (dy >= 0L) {
+        y_from <- seq_len(ny - dy)
+      } else {
+        y_from <- seq.int(1L - dy, ny)
+      }
+      y_to <- y_from + dy
+
+      edge_i <- as.vector(ids[x_from, y_from, drop = FALSE])
+      edge_j <- as.vector(ids[x_to, y_to, drop = FALSE])
+
+      edges_i <- c(edges_i, edge_i)
+      edges_j <- c(edges_j, edge_j)
+      weights <- c(weights, rep(exp(-0.5 * (dist / spatial_sigma)^2), length(edge_i)))
+    }
+  }
+
+  if (!length(weights)) {
+    return(NULL)
+  }
+
+  weights <- weights / mean(weights)
+
+  list(
+    edges = cbind(as.integer(edges_i), as.integer(edges_j)),
+    weights = as.numeric(weights),
+    sigma = spatial_sigma
+  )
+}
+
+spatial_penalty <- function(A, spatial_graph, device, component_weights = NULL) {
+  if (is.null(spatial_graph)) {
+    return(torch::torch_tensor(0, device = device))
+  }
+
+  edges <- spatial_graph$edges
+  if (is.null(edges) || nrow(edges) == 0L) {
+    return(torch::torch_tensor(0, device = device))
+  }
+
+  diff <- A[edges[, 1L], , drop = FALSE] - A[edges[, 2L], , drop = FALSE]
+  edge_weights <- torch::torch_tensor(
+    matrix(spatial_graph$weights, ncol = 1L),
+    device = device
+  )
+  weighted_diff <- edge_weights * (diff^2)
+
+  if (is.null(component_weights)) {
+    return(torch::torch_mean(weighted_diff))
+  }
+
+  component_weights <- as.numeric(component_weights)
+  if (!length(component_weights) || !any(component_weights > 0)) {
+    return(torch::torch_tensor(0, device = device))
+  }
+
+  comp_weights <- torch::torch_tensor(matrix(component_weights, ncol = 1L), device = device)
+  torch::torch_mean(weighted_diff$matmul(comp_weights))
+}
+
+sparse_penalty <- function(A, device, component_weights = NULL) {
+  if (is.null(component_weights)) {
+    return(torch::torch_tensor(0, device = device))
+  }
+
+  component_weights <- as.numeric(component_weights)
+  if (!length(component_weights) || !any(component_weights > 0)) {
+    return(torch::torch_tensor(0, device = device))
+  }
+
+  comp_weights <- torch::torch_tensor(matrix(component_weights, ncol = 1L), device = device)
+  torch::torch_mean(A$matmul(comp_weights))
+}
+
+has_positive_penalty <- function(x) {
+  is.numeric(x) && length(x) > 0L && any(is.finite(x) & x > 0)
+}
+
+normalize_component_indices <- function(components, k, name) {
+  if (is.null(components)) {
+    return(NULL)
+  }
+
+  components <- as.integer(components)
+  components <- unique(components[!is.na(components)])
+  if (!length(components)) {
+    return(integer())
+  }
+  if (any(components < 1L | components > k)) {
+    stop(sprintf("'%s' contains invalid component indices.", name), call. = FALSE)
+  }
+
+  sort(components)
+}
+
+resolve_component_penalty <- function(value, k, active_components = NULL, name = "penalty") {
+  if (!is.numeric(value) || !length(value) || any(is.na(value)) || any(value < 0)) {
+    stop(sprintf("'%s' must be a non-negative numeric scalar or length-k vector.", name), call. = FALSE)
+  }
+
+  active_components <- normalize_component_indices(
+    active_components,
+    k = k,
+    name = paste0(name, "_components")
+  )
+
+  if (length(value) == 1L) {
+    weights <- rep(0, k)
+    if (!value) {
+      return(weights)
+    }
+
+    if (is.null(active_components)) {
+      active_components <- seq_len(k)
+    }
+    if (!length(active_components)) {
+      return(weights)
+    }
+
+    weights[active_components] <- as.numeric(value) / length(active_components)
+    return(weights)
+  }
+
+  if (length(value) != k) {
+    stop(sprintf("'%s' must have length 1 or k = %d.", name, k), call. = FALSE)
+  }
+  if (!is.null(active_components)) {
+    stop(
+      sprintf(
+        "Supply either a scalar '%s' with selected components or a length-k vector, not both.",
+        name
+      ),
+      call. = FALSE
+    )
+  }
+
+  as.numeric(value)
 }

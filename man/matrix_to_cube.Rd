@@ -4,7 +4,7 @@
 \alias{matrix_to_cube}
 \title{Reshape a Matrix Back Into a Cube}
 \usage{
-matrix_to_cube(x, nx, ny)
+matrix_to_cube(x, nx, ny, metadata = NULL)
 }
 \arguments{
 \item{x}{Numeric matrix with one row per spatial pixel.}
@@ -12,6 +12,8 @@ matrix_to_cube(x, nx, ny)
 \item{nx}{Number of x-axis pixels.}
 
 \item{ny}{Number of y-axis pixels.}
+
+\item{metadata}{Optional metadata list to attach to the returned cube.}
 }
 \value{
 A numeric 3D array.

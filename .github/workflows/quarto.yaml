@@ -25,7 +25,7 @@ jobs:
         with:
           extra-packages: any::knitr, any::rmarkdown, any::remotes
       - uses: actions/configure-pages@v5
-      - name: Install SpectralUnmix
+      - name: Install SpaxNMF
         run: remotes::install_local(".", dependencies = TRUE, upgrade = "never")
         shell: Rscript {0}
       - name: Render website

@@ -14,13 +14,13 @@ knitr::opts_chunk$set(
 )
 ```
 
-`SpectralUnmix` is designed around a simple representation of a spectral cube:
+`SpaxNMF` is designed around a simple representation of a spectral cube:
 one row per spaxel, one column per wavelength channel.
 
 ## Simulate a small IFU-like dataset
 
 ```{r}
-library(SpectralUnmix)
+library(SpaxNMF)
 
 demo <- simulate_ifu_cube(nx = 14, ny = 14, n_wave = 90)
 dim(demo$matrix)
@@ -49,76 +49,20 @@ image(map1, main = "Component 1", xlab = "x", ylab = "y")
 plot_reconstruction(fit, demo$matrix, n = 4, wavelength = demo$wavelength)
 ```
 
-## Real spectra example
+## Real-data roadmap
 
-The package also includes four real stellar spectra extracted from the Coelho
-synthetic library. This is a lightweight way to show that a small number of
-non-negative components can represent distinct spectral shapes from a real
-library.
+The real-data examples for this package will move toward a small set of public
+MaNGA cubes, with matched preprocessing and side-by-side comparisons between
+PCA, vanilla NMF, and spatial NMF.
 
-```{r}
-real_demo <- coelho_demo_spectra()
-dim(real_demo$matrix)
-real_demo$metadata
-```
-
-```{r, eval = FALSE}
-fit_real <- spectral_unmix(
-  real_demo$matrix,
-  k = 3,
-  lambda_smooth = 0.001,
-  niter = 400,
-  lr = 0.03
-)
-
-plot(fit_real, type = "spectra", wavelength = real_demo$wavelength)
-plot_reconstruction(
-  fit_real,
-  real_demo$matrix,
-  n = 4,
-  wavelength = real_demo$wavelength
-)
-```
-
-## Stellar library compression example
-
-For a larger real-data example, the package includes a curated subset of 100
-stellar spectra spanning five broad stellar types. This is a better setting for
-showing that a small number of non-negative components can reconstruct a real
-spectral library.
-
-```{r}
-stellar_lib <- coelho_stellar_subset()
-dim(stellar_lib$matrix)
-table(stellar_lib$metadata$type)
-```
-
-```{r, eval = FALSE}
-fit_lib <- spectral_unmix(
-  stellar_lib$matrix,
-  k = 5,
-  lambda_smooth = 0.001,
-  niter = 500,
-  lr = 0.03
-)
-
-plot(fit_lib, type = "spectra", wavelength = stellar_lib$wavelength)
-plot_reconstruction(
-  fit_lib,
-  stellar_lib$matrix,
-  n = 6,
-  wavelength = stellar_lib$wavelength
-)
-```
-
-## Typical astronomy workflow
+## Typical workflow
 
 1. Read or simulate an IFU cube.
 2. Convert it with `cube_to_matrix()`.
 3. Fit `spectral_unmix()`.
 4. Plot component spectra and abundance maps.
-5. Compare the recovered structures with astrophysical priors or standard
-   decompositions such as PCA, QR/PCA, or classical NMF.
+5. Compare the recovered structures with baseline decompositions such as PCA
+   and classical NMF.
 
-At this stage, `SpectralUnmix` is best positioned for a methods note with one
+At this stage, `SpaxNMF` is best positioned for a methods note with one
 synthetic example and one real-data application.

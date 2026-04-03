@@ -3,7 +3,7 @@ title: "Getting Started"
 ---
 
 ```{r}
-library(SpectralUnmix)
+library(SpaxNMF)
 ```
 
 ## Simulated example
@@ -60,58 +60,14 @@ Observed versus reconstructed spectra:
   reconstruction back into a cube.
 - `residuals(fit, x = ...)` returns data minus reconstruction.
 
-## Real library example
+## Real-data roadmap
 
-```{r}
-real_demo <- coelho_demo_spectra()
-dim(real_demo$matrix)
-real_demo$metadata
-```
+The next demo layer will use a small set of public MaNGA cubes. The main goal
+is to compare:
 
-```{r, eval = FALSE}
-fit_real <- spectral_unmix(
-  real_demo$matrix,
-  k = 3,
-  lambda_smooth = 0.001,
-  niter = 400,
-  lr = 0.03
-)
+- PCA components
+- vanilla NMF components
+- spatial NMF components
 
-plot(fit_real, type = "spectra", wavelength = real_demo$wavelength)
-plot_reconstruction(
-  fit_real,
-  real_demo$matrix,
-  n = 4,
-  wavelength = real_demo$wavelength
-)
-```
-
-Static reconstruction view for the Coelho demo sample:
-
-![](images/coelho-reconstruction.png)
-
-## Stellar library compression
-
-```{r}
-stellar_lib <- coelho_stellar_subset()
-dim(stellar_lib$matrix)
-table(stellar_lib$metadata$type)
-```
-
-```{r, eval = FALSE}
-fit_lib <- spectral_unmix(
-  stellar_lib$matrix,
-  k = 5,
-  lambda_smooth = 0.001,
-  niter = 500,
-  lr = 0.03
-)
-
-plot(fit_lib, type = "spectra", wavelength = stellar_lib$wavelength)
-plot_reconstruction(
-  fit_lib,
-  stellar_lib$matrix,
-  n = 6,
-  wavelength = stellar_lib$wavelength
-)
-```
+using a consistent component-spectrum figure and the same preprocessing for all
+methods.

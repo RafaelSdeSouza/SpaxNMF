@@ -1,7 +1,7 @@
 \name{spectral_unmix}
 \alias{spectral_unmix}
 \alias{print.spectral_unmix}
-\title{Spectral Unmixing for Hyperspectral and IFU Data}
+\title{Regularized NMF for IFU Data}
 \usage{
 spectral_unmix(
   x,
@@ -76,9 +76,9 @@ where rows of \eqn{X} correspond to spectra from individual spatial elements,
 \eqn{A} contains non-negative abundance weights, and \eqn{S} contains
 non-negative spectral components.
 
-This implementation is aimed at hyperspectral cubes and integral-field
-spectroscopy data after reshaping the spatial dimensions into a two-dimensional
-matrix of spaxels by wavelength. The objective function is
+This implementation is aimed at integral-field spectroscopy data after
+reshaping the spatial dimensions into a two-dimensional matrix of spaxels by
+wavelength. The objective function is
 \deqn{\|X - AS\|^2 + \lambda \|D S\|^2}
 where the second term penalizes rapid channel-to-channel variations in each
 component spectrum.

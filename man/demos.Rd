@@ -37,7 +37,7 @@ grid, and spatial dimensions.
 \code{demo_ifu_unmix()} returns a list with the simulated data and fitted model.
 }
 \description{
-Helpers for building reproducible examples and astronomy-oriented documentation.
+Helpers for building reproducible IFU examples and package documentation.
 }
 \examples{
 demo <- simulate_ifu_cube()

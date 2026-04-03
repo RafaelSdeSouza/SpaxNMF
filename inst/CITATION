@@ -1,10 +1,10 @@
-citHeader("To cite SpectralUnmix in publications use:")
+citHeader("To cite SpaxNMF in publications use:")
 
 bibentry(
   bibtype = "Manual",
-  title = "SpectralUnmix: Spectral Unmixing for Hyperspectral and IFU Data",
+  title = "SpaxNMF: Regularized Non-negative Matrix Factorization for IFU Cubes",
   author = person("Rafael", "S. de Souza"),
   year = "2026",
   note = "R package version 0.1.0",
-  url = "https://github.com/RafaelSdeSouza/SpectralUnmix"
+  url = "https://github.com/RafaelSdeSouza/SpaxNMF"
 )

@@ -7,7 +7,7 @@
 \alias{residuals.spectral_unmix}
 \alias{summary.spectral_unmix}
 \alias{print.summary.spectral_unmix}
-\title{Standard Model Methods for SpectralUnmix Fits}
+\title{Standard Model Methods for SpaxNMF Fits}
 \usage{
 basis(object, ...)
 

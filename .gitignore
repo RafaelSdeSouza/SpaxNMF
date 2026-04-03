@@ -1,4 +1,11 @@
+.DS_Store
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
+*.tar.gz
+*.Rcheck/
+docs/
+site/_site/
+site/images/*diagnostic*.png
+site/images/synthetic-basis-mosaic.png
