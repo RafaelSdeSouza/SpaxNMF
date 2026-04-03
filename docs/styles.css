@@ -1,0 +1,299 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
+
+:root {
+  --spax-ink: #102339;
+  --spax-deep: #0b1625;
+  --spax-ocean: #0f5f73;
+  --spax-ocean-soft: #d8edf1;
+  --spax-gold: #e6a43b;
+  --spax-sand: #f5efe4;
+  --spax-paper: #fffdf8;
+  --spax-mist: #edf3f7;
+  --spax-border: rgba(16, 35, 57, 0.12);
+  --spax-shadow: 0 22px 50px rgba(11, 22, 37, 0.12);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
+  color: var(--spax-ink);
+  background:
+    radial-gradient(circle at top left, rgba(230, 164, 59, 0.12), transparent 28%),
+    radial-gradient(circle at top right, rgba(15, 95, 115, 0.10), transparent 34%),
+    linear-gradient(180deg, #f7fbfd 0%, var(--spax-paper) 18%, var(--spax-paper) 100%);
+}
+
+h1,
+h2,
+h3,
+h4,
+.navbar-title,
+.quarto-title-banner .title {
+  font-family: "Fraunces", Georgia, serif;
+  letter-spacing: -0.02em;
+}
+
+code,
+pre,
+.sourceCode {
+  font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+}
+
+.navbar {
+  background: rgba(255, 253, 248, 0.94);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(16, 35, 57, 0.08);
+  box-shadow: 0 10px 30px rgba(11, 22, 37, 0.05);
+}
+
+.navbar-title,
+.nav-link {
+  color: var(--spax-deep) !important;
+}
+
+.quarto-title-banner {
+  background:
+    radial-gradient(circle at top right, rgba(230, 164, 59, 0.24), transparent 26%),
+    linear-gradient(135deg, #102339 0%, #0f5f73 100%);
+}
+
+.quarto-title-banner .quarto-title .title,
+.quarto-title-banner .quarto-title p {
+  color: white;
+}
+
+.hero-shell {
+  margin: 0 0 2.25rem 0;
+  padding: 2.5rem;
+  background:
+    radial-gradient(circle at top right, rgba(230, 164, 59, 0.22), transparent 28%),
+    linear-gradient(135deg, rgba(11, 22, 37, 0.98), rgba(15, 95, 115, 0.96));
+  color: white;
+  border-radius: 28px;
+  box-shadow: var(--spax-shadow);
+  overflow: hidden;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.9fr);
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.78);
+  margin-bottom: 0.75rem;
+}
+
+.hero-shell h1 {
+  color: white;
+  font-size: clamp(2.35rem, 4vw, 4.2rem);
+  line-height: 0.98;
+  margin-bottom: 1rem;
+}
+
+.hero-copy {
+  max-width: 52rem;
+  font-size: 1.1rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 1.35rem;
+}
+
+.hero-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 11rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 700;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.hero-button:hover {
+  transform: translateY(-1px);
+}
+
+.hero-primary {
+  background: var(--spax-gold);
+  color: var(--spax-deep);
+  box-shadow: 0 14px 28px rgba(230, 164, 59, 0.26);
+}
+
+.hero-secondary {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+}
+
+.hero-card,
+.feature-card,
+.metric-card,
+.equation-panel,
+.info-panel {
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--spax-ink);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 22px;
+  padding: 1.25rem 1.35rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.hero-card h3,
+.feature-card h3,
+.equation-panel h3,
+.info-panel h3 {
+  margin-top: 0;
+  margin-bottom: 0.55rem;
+}
+
+.hero-card p:last-child,
+.feature-card p:last-child,
+.equation-panel p:last-child,
+.info-panel p:last-child {
+  margin-bottom: 0;
+}
+
+.metric-ribbon,
+.feature-grid,
+.two-up,
+.info-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.metric-ribbon {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 1.5rem 0 2rem 0;
+}
+
+.metric-card {
+  background: white;
+  border: 1px solid var(--spax-border);
+  box-shadow: 0 14px 32px rgba(11, 22, 37, 0.08);
+}
+
+.metric-card strong {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--spax-ocean);
+  margin-bottom: 0.45rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.metric-card span {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.7rem;
+  line-height: 1.1;
+}
+
+.feature-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 1.5rem 0 2rem 0;
+}
+
+.feature-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(237, 243, 247, 0.88));
+  border: 1px solid var(--spax-border);
+  box-shadow: 0 18px 34px rgba(11, 22, 37, 0.06);
+}
+
+.two-up,
+.info-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 1.5rem 0;
+}
+
+.equation-panel {
+  background: linear-gradient(180deg, rgba(216, 237, 241, 0.58), rgba(255, 253, 248, 0.96));
+  border: 1px solid rgba(15, 95, 115, 0.18);
+}
+
+.equation-panel .math.display {
+  margin: 1rem 0;
+}
+
+.section-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--spax-ocean);
+  margin-bottom: 0.6rem;
+}
+
+.benchmark-note {
+  padding: 1rem 1.15rem;
+  border-left: 4px solid var(--spax-gold);
+  background: linear-gradient(90deg, rgba(230, 164, 59, 0.14), rgba(255, 253, 248, 0.92));
+  border-radius: 12px;
+  margin: 1.25rem 0;
+}
+
+.table thead,
+table thead {
+  background: var(--spax-mist);
+}
+
+table {
+  border: 1px solid var(--spax-border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+img,
+.figure-img {
+  border-radius: 18px;
+  box-shadow: 0 18px 34px rgba(11, 22, 37, 0.10);
+}
+
+.quarto-grid-item .card,
+.card {
+  border-radius: 20px;
+  border: 1px solid var(--spax-border);
+}
+
+a {
+  color: var(--spax-ocean);
+}
+
+a:hover {
+  color: #0a4857;
+}
+
+.quarto-title-meta,
+.quarto-title-meta-heading,
+.quarto-title-meta-contents {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+@media (max-width: 991px) {
+  .hero-grid,
+  .metric-ribbon,
+  .feature-grid,
+  .two-up,
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-shell {
+    padding: 1.65rem;
+  }
+}
