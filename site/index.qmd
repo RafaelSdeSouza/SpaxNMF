@@ -1,87 +1,189 @@
 ---
 title: "SpaxNMF"
+page-layout: full
 ---
 
-`SpaxNMF` is an R package for IFU cube decomposition with regularized
-non-negative matrix factorization.
+::: {.hero-shell}
+<div class="hero-grid">
+<div>
+<p class="eyebrow">Spatially aware NMF for integral-field spectroscopy</p>
 
-::: {.hero-note}
-The package fits a low-rank model that decomposes a spectral matrix into
-component spectra and spatially regularized component-weight maps while
-preserving non-negativity.
-:::
+# Recover component spectra and spatial structure from IFU cubes
 
-## Model
+<p class="hero-copy">
+SpaxNMF fits non-negative component spectra together with component-weight
+maps, combining smooth spectral regularization, Gaussian spatial coupling, and
+optional sparse priors for compact sources.
+</p>
 
-The package factorizes the data matrix as
+<div class="hero-actions">
+  <a class="hero-button hero-primary" href="getting-started.html">Get Started</a>
+  <a class="hero-button hero-secondary" href="model.html">See the Equations</a>
+</div>
+</div>
+
+<div class="hero-card">
+<h3>Implemented objective</h3>
 
 $$
-X \approx A S
-$$
-
-where `X` is a spaxel-by-wavelength matrix, `A` contains non-negative
-component weights, and `S` contains non-negative component spectra.
-
-The loss currently implemented in `spax_nmf()` is
-
-$$
-\mathcal{L}(A, S)=
+\mathcal{L}(A,S)=
 \|X-AS\|_F^2
 +\lambda_S \|DS\|_F^2
 +\sum_c \lambda_{A,c}\sum_{i,j} w_{ij}(A_{ic}-A_{jc})^2
 +\sum_c \lambda_{C,c}\|A_{:,c}\|_1
 $$
 
-with
+<p>
+<code>A</code> contains component weights, not chemical abundances. The spatial
+term regularizes those weights across neighboring spaxels through
+Gaussian kernel weights <code>w<sub>ij</sub></code>.
+</p>
+</div>
+</div>
+:::
+
+<div class="metric-ribbon">
+<div class="metric-card">
+<strong>Data View</strong>
+<span>Spaxels × wavelength</span>
+<p>Built around matrix factorization after reshaping IFU cubes.</p>
+</div>
+<div class="metric-card">
+<strong>Spatial Prior</strong>
+<span>Gaussian kernel</span>
+<p>Nearby spaxels are coupled with PSF-like distance weighting.</p>
+</div>
+<div class="metric-card">
+<strong>Compact Sources</strong>
+<span>Optional sparse maps</span>
+<p>Selected components can be driven toward GC-like or point-like structure.</p>
+</div>
+</div>
+
+<div class="feature-grid">
+<div class="feature-card">
+<h3>Interpretability first</h3>
+<p>
+The factorization is non-negative, so each spaxel is reconstructed as a
+positive combination of shared component spectra and spatially varying
+component weights.
+</p>
+</div>
+<div class="feature-card">
+<h3>Designed for real cubes</h3>
+<p>
+The package includes helpers for IFU reshaping, metadata preservation, and
+comparative diagnostics against PCA and vanilla NMF on the same target.
+</p>
+</div>
+<div class="feature-card">
+<h3>Method development ready</h3>
+<p>
+The current implementation supports smooth spectra, weighted spatial priors,
+and sparse compact-source components inside the same torch optimization loop.
+</p>
+</div>
+</div>
+
+## Core Factorization
+
+<div class="two-up">
+<div class="equation-panel">
+<p class="section-kicker">Factorization</p>
+<h3>Shared spectra, spatially varying weights</h3>
 
 $$
-w_{ij} = \exp\left(-\frac{d_{ij}^2}{2\sigma^2}\right),
+X \approx AS
 $$
 
-so the spatial term explicitly couples nearby spaxels and discourages noisy
-salt-and-pepper component-weight maps.
+<p>
+<code>X</code> is the spaxel-by-wavelength matrix, <code>A</code> is the
+component-weight matrix, and <code>S</code> contains the component spectra.
+</p>
+</div>
 
-## Workflow
+<div class="equation-panel">
+<p class="section-kicker">Spatial term</p>
+<h3>Weighted coherence between neighboring spaxels</h3>
+
+$$
+w_{ij} = \exp\left(-\frac{d_{ij}^2}{2\sigma^2}\right)
+$$
+
+<p>
+This term discourages noisy salt-and-pepper maps by penalizing strong changes
+between nearby component weights while allowing distant spaxels to decouple.
+</p>
+</div>
+</div>
+
+## Quick Workflow
 
 ```{mermaid}
 flowchart LR
   A["IFU cube<br/>nx × ny × nλ"] --> B["cube_to_matrix()"]
   B --> C["spaxel × wavelength matrix X"]
   C --> D["spax_nmf()"]
-  D --> E["A: component-weight maps"]
-  D --> F["S: component spectra"]
-  D --> G["AS: reconstruction"]
+  D --> E["component-weight maps A"]
+  D --> F["component spectra S"]
+  D --> G["reconstruction AS"]
   E --> H["component_map()"]
   F --> I["plot(type = 'spectra')"]
   G --> J["predict(type = 'cube') / fitted()"]
 ```
 
-## Interpretation
+## Example Outputs
 
-Each spaxel spectrum is modeled as a non-negative combination of a small number
-of latent spectral components. The spatial weights vary across the field, while
-the component spectra are shared across all spaxels.
-
-## Example output
-
-The figure below shows the component spectra recovered from the bundled
-synthetic example used throughout the documentation.
+<div class="two-up">
+<div class="info-panel">
+<h3>Recovered spectra</h3>
+<p>
+The bundled synthetic example provides a lightweight sanity check for the
+current spectral smoothness and component-separation behavior.
+</p>
 
 ![](images/simulated-spectra.png)
+</div>
 
-## Main functions
+<div class="info-panel">
+<h3>Recovered maps</h3>
+<p>
+The corresponding component-weight maps show how the decomposition couples the
+spectral basis to the spatial structure of the cube.
+</p>
 
-- `spax_nmf()` fits the model.
-- `cube_to_matrix()` and `matrix_to_cube()` reshape IFU cubes.
-- `basis()` and `coef()` provide NMF-style accessors.
-- `fitted()`, `predict()`, and `residuals()` provide standard model methods.
-- `plot()` and `plot_reconstruction()` provide quick diagnostics.
+![](images/simulated-maps.png)
+</div>
+</div>
 
-## Real-data scope
+## Main Entry Points
 
-The package supports comparative IFU analyses in which PCA, vanilla NMF, and
-spatially regularized NMF are evaluated under matched preprocessing and
-visualized with a common diagnostic style.
+<div class="info-grid">
+<div class="info-panel">
+<h3>Fit models</h3>
+<p><code>spax_nmf()</code> fits the torch model and returns spectra, weights,
+reconstructions, and optimization history.</p>
+</div>
+
+<div class="info-panel">
+<h3>Reshape data</h3>
+<p><code>cube_to_matrix()</code> and <code>matrix_to_cube()</code> move between
+IFU cubes and the matrix view required by the optimizer.</p>
+</div>
+
+<div class="info-panel">
+<h3>Inspect results</h3>
+<p><code>component_map()</code>, <code>component_spectrum()</code>,
+<code>plot()</code>, and <code>plot_reconstruction()</code> provide quick
+diagnostics.</p>
+</div>
+
+<div class="info-panel">
+<h3>Benchmark on real targets</h3>
+<p>The benchmark page shows how the current model behaves on a mixed
+galaxy+GC+sky cube under matched preprocessing.</p>
+</div>
+</div>
 
 ## Installation
 
