@@ -19,7 +19,7 @@ component_map(fit, nx, ny, component = 1)
 A numeric matrix of size \code{nx x ny}.
 }
 \description{
-Reshapes one abundance column from a fitted model into an image plane.
+Reshapes one component-weight column from a fitted model into an image plane.
 }
 \examples{
 cube <- simulate_ifu_cube(nx = 6, ny = 5, n_wave = 20)

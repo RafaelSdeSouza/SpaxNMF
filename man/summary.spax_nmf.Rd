@@ -2,7 +2,7 @@
 % Please edit documentation in R/spax_nmf.R
 \name{summary.spax_nmf}
 \alias{summary.spax_nmf}
-\title{Summarize a Spectral Unmixing Fit}
+\title{Summarize a SpaxNMF Fit}
 \usage{
 \method{summary}{spax_nmf}(object, ...)
 }
@@ -15,7 +15,7 @@
 A list with class \code{"summary.spax_nmf"}.
 }
 \description{
-Summarize a Spectral Unmixing Fit
+Summarize a SpaxNMF Fit
 }
 \examples{
 fake <- list(

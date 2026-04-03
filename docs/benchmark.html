@@ -141,6 +141,7 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#real-cube-benchmark" id="toc-real-cube-benchmark" class="nav-link active" data-scroll-target="#real-cube-benchmark">Real-Cube Benchmark</a></li>
   <li><a href="#current-figure" id="toc-current-figure" class="nav-link" data-scroll-target="#current-figure">Current Figure</a></li>
   <li><a href="#summary-metrics" id="toc-summary-metrics" class="nav-link" data-scroll-target="#summary-metrics">Summary Metrics</a></li>
+  <li><a href="#how-to-read-the-figure" id="toc-how-to-read-the-figure" class="nav-link" data-scroll-target="#how-to-read-the-figure">How To Read The Figure</a></li>
   <li><a href="#recommended-settings" id="toc-recommended-settings" class="nav-link" data-scroll-target="#recommended-settings">Recommended Settings</a></li>
   <li><a href="#interpretation" id="toc-interpretation" class="nav-link" data-scroll-target="#interpretation">Interpretation</a></li>
   </ul>
@@ -170,7 +171,7 @@ ul.task-list li input[type="checkbox"] {
 
 <section id="real-cube-benchmark" class="level2">
 <h2 class="anchored" data-anchor-id="real-cube-benchmark">Real-Cube Benchmark</h2>
-<p>This benchmark uses <code>NGC1512_cube_mockGCs.fits</code>, a mixed cube containing extended galaxy structure, compact GC-like sources, and sky contamination in the same field. The current benchmark is designed to answer two questions:</p>
+<p>This benchmark uses <code>NGC1512_cube_mockGCs.fits</code>, a mixed cube containing extended galaxy structure, compact GC-like sources, and sky contamination in the same field. It is designed to answer two practical questions:</p>
 <ol type="1">
 <li>How much reconstruction quality is lost relative to PCA?</li>
 <li>Does the mixed smooth+sparse spatial prior produce more concentrated compact components than vanilla NMF?</li>
@@ -181,7 +182,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="current-figure" class="level2">
 <h2 class="anchored" data-anchor-id="current-figure">Current Figure</h2>
-<p>If the benchmark outputs are present in the repository, the latest figure is shown below.</p>
+<p>The saved figure emphasizes the candidate compact components, their component-weight maps, and a residual-energy comparison at fixed rank.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div>
@@ -246,6 +247,15 @@ ul.task-list li input[type="checkbox"] {
 </div>
 </div>
 <p><code>mean_top1pct</code> and <code>mean_top5pct</code> measure how much component-weight mass is carried by the brightest 1% or 5% of map pixels. Higher values indicate more concentrated maps. For the designated sparse components, the <code>sparse_top1pct</code> and <code>sparse_top5pct</code> columns isolate that concentration test.</p>
+</section>
+<section id="how-to-read-the-figure" class="level2">
+<h2 class="anchored" data-anchor-id="how-to-read-the-figure">How To Read The Figure</h2>
+<ul>
+<li>The reconstruction panel checks whether the mixed prior preserves acceptable spaxel-level fits.</li>
+<li>The compact-component spectra panel is diagnostic only: on this mixed cube the recovered basis spectra are still not clean astrophysical templates, so the main comparison is relative rather than interpretive.</li>
+<li>The compact-component maps panel is the main spatial diagnostic for whether the sparse prior is isolating localized structure.</li>
+<li>The residual-energy panel is secondary: PCA is expected to win on pure rank-(k) squared-error reconstruction.</li>
+</ul>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
 <pre><code>In the current saved run, spatial NMF improves the vanilla NMF reconstruction MSE from 0.000399 to 0.000322, while increasing the designated sparse-component top-1% concentration from 0.057 to 0.113.</code></pre>

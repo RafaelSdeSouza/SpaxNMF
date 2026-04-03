@@ -207,7 +207,7 @@ window.Quarto = {
   <ul>
   <li><a href="#core-factorization" id="toc-core-factorization" class="nav-link active" data-scroll-target="#core-factorization">Core Factorization</a></li>
   <li><a href="#quick-workflow" id="toc-quick-workflow" class="nav-link" data-scroll-target="#quick-workflow">Quick Workflow</a></li>
-  <li><a href="#example-outputs" id="toc-example-outputs" class="nav-link" data-scroll-target="#example-outputs">Example Outputs</a></li>
+  <li><a href="#real-cube-benchmark" id="toc-real-cube-benchmark" class="nav-link" data-scroll-target="#real-cube-benchmark">Real-Cube Benchmark</a></li>
   <li><a href="#main-entry-points" id="toc-main-entry-points" class="nav-link" data-scroll-target="#main-entry-points">Main Entry Points</a></li>
   <li><a href="#installation" id="toc-installation" class="nav-link" data-scroll-target="#installation">Installation</a></li>
   </ul>
@@ -247,23 +247,30 @@ Spatially aware NMF for integral-field spectroscopy
 SpaxNMF fits non-negative component spectra together with component-weight maps, combining smooth spectral regularization, Gaussian spatial coupling, and optional sparse priors for compact sources.
 </p>
 <div class="hero-actions">
-<p><a class="hero-button hero-primary" href="getting-started.html">Get Started</a> <a class="hero-button hero-secondary" href="model.html">See the Equations</a></p>
+<p><a class="hero-button hero-primary" href="getting-started.html">Get Started</a> <a class="hero-button hero-secondary" href="benchmark.html">See the Benchmark</a></p>
 </div>
 </section>
 </div>
 <div class="hero-card">
 <h3 class="anchored">
-Implemented objective
+What the spatial model adds
 </h3>
-<p><span class="math display">\[
-\mathcal{L}(A,S)=
-\|X-AS\|_F^2
-+\lambda_S \|DS\|_F^2
-+\sum_c \lambda_{A,c}\sum_{i,j} w_{ij}(A_{ic}-A_{jc})^2
-+\sum_c \lambda_{C,c}\|A_{:,c}\|_1
-\]</span></p>
-<p>
-<code>A</code> contains component weights, not chemical abundances. The spatial term regularizes those weights across neighboring spaxels through Gaussian kernel weights <code>w<sub>ij</sub></code>.
+<ul class="hero-list">
+<li>
+Shared non-negative component spectra recovered from the full cube.
+</li>
+<li>
+Gaussian spatial coupling on component-weight maps for extended structure.
+</li>
+<li>
+Optional sparse priors for compact-source components such as GC-like signals.
+</li>
+<li>
+Real-cube diagnostics against PCA and vanilla NMF under matched preprocessing.
+</li>
+</ul>
+<p class="hero-card-note">
+The full objective, kernel weighting, and optimization details are documented on the <a href="model.html">Model</a> page.
 </p>
 </div>
 </div>
@@ -371,26 +378,52 @@ This term discourages noisy salt-and-pepper maps by penalizing strong changes be
 </div>
 </div>
 </section>
-<section id="example-outputs" class="level2">
-<h2 class="anchored" data-anchor-id="example-outputs">Example Outputs</h2>
+<section id="real-cube-benchmark" class="level2">
+<h2 class="anchored" data-anchor-id="real-cube-benchmark">Real-Cube Benchmark</h2>
 <div class="two-up">
 <div class="info-panel">
 <h3 class="anchored">
-Recovered spectra
+NGC1512 galaxy + compact sources + sky
 </h3>
 <p>
-The bundled synthetic example provides a lightweight sanity check for the current spectral smoothness and component-separation behavior.
+The current benchmark uses <code>NGC1512_cube_mockGCs.fits</code>, a mixed IFU cube containing extended galaxy structure, compact GC-like sources, and sky contamination in the same field. The comparison applies the same outer-spaxel sky subtraction and matched preprocessing before fitting PCA, vanilla NMF, and the mixed spatial+sparse model.
 </p>
-<p><img src="images/simulated-spectra.png" class="img-fluid"></p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>&lt;p class='benchmark-inline'&gt;On the saved NGC1512 benchmark, the mixed spatial+sparse fit reduces the vanilla NMF MSE from 0.000399 to 0.000322 while raising the designated compact-component top-1% concentration from 0.057 to 0.113.&lt;/p&gt;</code></pre>
+</div>
+</div>
+<p class="hero-card-note">
+Use the benchmark page for the full figure, saved metrics, and the exact run configuration used to generate them.
+</p>
+<p>
+<a href="benchmark.html">Open the real-cube benchmark</a>
+</p>
 </div>
 <div class="info-panel">
 <h3 class="anchored">
-Recovered maps
+What the benchmark is for
 </h3>
 <p>
-The corresponding component-weight maps show how the decomposition couples the spectral basis to the spatial structure of the cube.
+This benchmark is intended as a technical validation target rather than a front-page showcase. It is useful for checking whether the mixed spatial+sparse prior improves compact-component concentration and preserves acceptable reconstruction quality under matched preprocessing.
 </p>
-<p><img src="images/simulated-maps.png" class="img-fluid"></p>
+<ul class="hero-list">
+<li>
+PCA remains the rank-(k) squared-error baseline.
+</li>
+<li>
+Vanilla NMF provides the non-negative comparison without spatial coupling.
+</li>
+<li>
+SpaxNMF adds Gaussian spatial smoothing and optional sparse compact-source components.
+</li>
+<li>
+The full figure, saved metrics, and run settings live on the benchmark page.
+</li>
+</ul>
+<p class="hero-card-note">
+Use the benchmark page when you want the detailed diagnostic, not the main landing-page overview.
+</p>
 </div>
 </div>
 </section>
@@ -433,8 +466,8 @@ The benchmark page shows how the current model behaves on a mixed galaxy+GC+sky 
 </section>
 <section id="installation" class="level2">
 <h2 class="anchored" data-anchor-id="installation">Installation</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages("remotes")</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">"RafaelSdeSouza/SpaxNMF"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages("remotes")</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">"RafaelSdeSouza/SpaxNMF"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>torch</code> must be available in the local R installation.</p>
 
 

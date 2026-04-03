@@ -2,7 +2,7 @@
 % Please edit documentation in R/spax_nmf.R
 \name{coef.spax_nmf}
 \alias{coef.spax_nmf}
-\title{Extract Abundance Coefficients}
+\title{Extract Component-Weight Coefficients}
 \usage{
 \method{coef}{spax_nmf}(object, ...)
 }

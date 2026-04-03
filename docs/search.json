@@ -4,28 +4,35 @@
     "href": "benchmark.html",
     "title": "Benchmark",
     "section": "",
-    "text": "This benchmark uses NGC1512_cube_mockGCs.fits, a mixed cube containing extended galaxy structure, compact GC-like sources, and sky contamination in the same field. The current benchmark is designed to answer two questions:\n\nHow much reconstruction quality is lost relative to PCA?\nDoes the mixed smooth+sparse spatial prior produce more concentrated compact components than vanilla NMF?\n\n\nThe benchmark uses outer-spaxel sky subtraction, weighted spatial smoothing for extended components, and sparse priors for the designated compact components."
+    "text": "This benchmark uses NGC1512_cube_mockGCs.fits, a mixed cube containing extended galaxy structure, compact GC-like sources, and sky contamination in the same field. It is designed to answer two practical questions:\n\nHow much reconstruction quality is lost relative to PCA?\nDoes the mixed smooth+sparse spatial prior produce more concentrated compact components than vanilla NMF?\n\n\nThe benchmark uses outer-spaxel sky subtraction, weighted spatial smoothing for extended components, and sparse priors for the designated compact components."
   },
   {
     "objectID": "benchmark.html#real-cube-benchmark",
     "href": "benchmark.html#real-cube-benchmark",
     "title": "Benchmark",
     "section": "",
-    "text": "This benchmark uses NGC1512_cube_mockGCs.fits, a mixed cube containing extended galaxy structure, compact GC-like sources, and sky contamination in the same field. The current benchmark is designed to answer two questions:\n\nHow much reconstruction quality is lost relative to PCA?\nDoes the mixed smooth+sparse spatial prior produce more concentrated compact components than vanilla NMF?\n\n\nThe benchmark uses outer-spaxel sky subtraction, weighted spatial smoothing for extended components, and sparse priors for the designated compact components."
+    "text": "This benchmark uses NGC1512_cube_mockGCs.fits, a mixed cube containing extended galaxy structure, compact GC-like sources, and sky contamination in the same field. It is designed to answer two practical questions:\n\nHow much reconstruction quality is lost relative to PCA?\nDoes the mixed smooth+sparse spatial prior produce more concentrated compact components than vanilla NMF?\n\n\nThe benchmark uses outer-spaxel sky subtraction, weighted spatial smoothing for extended components, and sparse priors for the designated compact components."
   },
   {
     "objectID": "benchmark.html#current-figure",
     "href": "benchmark.html#current-figure",
     "title": "Benchmark",
     "section": "Current Figure",
-    "text": "Current Figure\nIf the benchmark outputs are present in the repository, the latest figure is shown below."
+    "text": "Current Figure\nThe saved figure emphasizes the candidate compact components, their component-weight maps, and a residual-energy comparison at fixed rank."
   },
   {
     "objectID": "benchmark.html#summary-metrics",
     "href": "benchmark.html#summary-metrics",
     "title": "Benchmark",
     "section": "Summary Metrics",
-    "text": "Summary Metrics\n\n\n\nCurrent NGC1512 benchmark summary.\n\n\n\n\n\n\n\n\n\n\nmodel\nmse\nmean_top1pct\nmean_top5pct\nsparse_top1pct\nsparse_top5pct\n\n\n\n\nPCA\n1.90e-06\nNA\nNA\nNA\nNA\n\n\nVanilla NMF\n3.99e-04\n0.05429\n0.2461\n0.05721\n0.2572\n\n\nSpatial NMF\n3.22e-04\n0.06771\n0.2947\n0.11270\n0.4601\n\n\n\n\n\nmean_top1pct and mean_top5pct measure how much component-weight mass is carried by the brightest 1% or 5% of map pixels. Higher values indicate more concentrated maps. For the designated sparse components, the sparse_top1pct and sparse_top5pct columns isolate that concentration test.\n\n\nIn the current saved run, spatial NMF improves the vanilla NMF reconstruction MSE from 0.000399 to 0.000322, while increasing the designated sparse-component top-1% concentration from 0.057 to 0.113."
+    "text": "Summary Metrics\n\n\n\nCurrent NGC1512 benchmark summary.\n\n\n\n\n\n\n\n\n\n\nmodel\nmse\nmean_top1pct\nmean_top5pct\nsparse_top1pct\nsparse_top5pct\n\n\n\n\nPCA\n1.90e-06\nNA\nNA\nNA\nNA\n\n\nVanilla NMF\n3.99e-04\n0.05429\n0.2461\n0.05721\n0.2572\n\n\nSpatial NMF\n3.22e-04\n0.06771\n0.2947\n0.11270\n0.4601\n\n\n\n\n\nmean_top1pct and mean_top5pct measure how much component-weight mass is carried by the brightest 1% or 5% of map pixels. Higher values indicate more concentrated maps. For the designated sparse components, the sparse_top1pct and sparse_top5pct columns isolate that concentration test."
+  },
+  {
+    "objectID": "benchmark.html#how-to-read-the-figure",
+    "href": "benchmark.html#how-to-read-the-figure",
+    "title": "Benchmark",
+    "section": "How To Read The Figure",
+    "text": "How To Read The Figure\n\nThe reconstruction panel checks whether the mixed prior preserves acceptable spaxel-level fits.\nThe compact-component spectra panel is diagnostic only: on this mixed cube the recovered basis spectra are still not clean astrophysical templates, so the main comparison is relative rather than interpretive.\nThe compact-component maps panel is the main spatial diagnostic for whether the sparse prior is isolating localized structure.\nThe residual-energy panel is secondary: PCA is expected to win on pure rank-(k) squared-error reconstruction.\n\n\n\nIn the current saved run, spatial NMF improves the vanilla NMF reconstruction MSE from 0.000399 to 0.000322, while increasing the designated sparse-component top-1% concentration from 0.057 to 0.113."
   },
   {
     "objectID": "benchmark.html#recommended-settings",
@@ -151,14 +158,14 @@
     "href": "model.html",
     "title": "Model",
     "section": "",
-    "text": "SpaxNMF represents an IFU cube as a matrix (X _{}^{n p}), with one row per spaxel and one column per wavelength channel. The model seeks a low-rank non-negative factorization\n\\[\nX \\approx AS\n\\]\nwhere:\n\n(A _{}^{n k}) contains component weights for each spaxel\n(S _{}^{k p}) contains the component spectra\n(k) is the chosen factorization rank\n\nA should be interpreted as a set of component-weight maps, not as chemical abundances."
+    "text": "SpaxNMF represents an IFU cube as a matrix (X _{}^{n p}), with one row per spaxel and one column per wavelength channel. The model seeks a low-rank non-negative factorization\n\\[\nX \\approx AS\n\\]\nwhere:\n\n(A _{}^{n k}) contains component weights for each spaxel\n(S _{}^{k p}) contains the component spectra\n(k) is the chosen factorization rank\n\nA should be interpreted simply as a set of component-weight maps over the field."
   },
   {
     "objectID": "model.html#overview",
     "href": "model.html#overview",
     "title": "Model",
     "section": "",
-    "text": "SpaxNMF represents an IFU cube as a matrix (X _{}^{n p}), with one row per spaxel and one column per wavelength channel. The model seeks a low-rank non-negative factorization\n\\[\nX \\approx AS\n\\]\nwhere:\n\n(A _{}^{n k}) contains component weights for each spaxel\n(S _{}^{k p}) contains the component spectra\n(k) is the chosen factorization rank\n\nA should be interpreted as a set of component-weight maps, not as chemical abundances."
+    "text": "SpaxNMF represents an IFU cube as a matrix (X _{}^{n p}), with one row per spaxel and one column per wavelength channel. The model seeks a low-rank non-negative factorization\n\\[\nX \\approx AS\n\\]\nwhere:\n\n(A _{}^{n k}) contains component weights for each spaxel\n(S _{}^{k p}) contains the component spectra\n(k) is the chosen factorization rank\n\nA should be interpreted simply as a set of component-weight maps over the field."
   },
   {
     "objectID": "model.html#objective-function",
@@ -200,7 +207,7 @@
     "href": "index.html",
     "title": "SpaxNMF",
     "section": "",
-    "text": "Spatially aware NMF for integral-field spectroscopy\n\n\n\n\nSpaxNMF fits non-negative component spectra together with component-weight maps, combining smooth spectral regularization, Gaussian spatial coupling, and optional sparse priors for compact sources.\n\n\nGet Started See the Equations\n\n\n\n\n\n\\[\n\\mathcal{L}(A,S)=\n\\|X-AS\\|_F^2\n+\\lambda_S \\|DS\\|_F^2\n+\\sum_c \\lambda_{A,c}\\sum_{i,j} w_{ij}(A_{ic}-A_{jc})^2\n+\\sum_c \\lambda_{C,c}\\|A_{:,c}\\|_1\n\\]\n\nA contains component weights, not chemical abundances. The spatial term regularizes those weights across neighboring spaxels through Gaussian kernel weights wij."
+    "text": "Spatially aware NMF for integral-field spectroscopy\n\n\n\n\nSpaxNMF fits non-negative component spectra together with component-weight maps, combining smooth spectral regularization, Gaussian spatial coupling, and optional sparse priors for compact sources.\n\n\nGet Started See the Benchmark\n\n\n\n\n\n\n\nShared non-negative component spectra recovered from the full cube.\n\n\nGaussian spatial coupling on component-weight maps for extended structure.\n\n\nOptional sparse priors for compact-source components such as GC-like signals.\n\n\nReal-cube diagnostics against PCA and vanilla NMF under matched preprocessing.\n\n\n\nThe full objective, kernel weighting, and optimization details are documented on the Model page."
   },
   {
     "objectID": "index.html#core-factorization",
@@ -217,11 +224,11 @@
     "text": "Quick Workflow\n\n\n\n\n\nflowchart LR\n  A[\"IFU cube&lt;br/&gt;nx × ny × nλ\"] --&gt; B[\"cube_to_matrix()\"]\n  B --&gt; C[\"spaxel × wavelength matrix X\"]\n  C --&gt; D[\"spax_nmf()\"]\n  D --&gt; E[\"component-weight maps A\"]\n  D --&gt; F[\"component spectra S\"]\n  D --&gt; G[\"reconstruction AS\"]\n  E --&gt; H[\"component_map()\"]\n  F --&gt; I[\"plot(type = 'spectra')\"]\n  G --&gt; J[\"predict(type = 'cube') / fitted()\"]"
   },
   {
-    "objectID": "index.html#example-outputs",
-    "href": "index.html#example-outputs",
+    "objectID": "index.html#real-cube-benchmark",
+    "href": "index.html#real-cube-benchmark",
     "title": "SpaxNMF",
-    "section": "Example Outputs",
-    "text": "Example Outputs\n\n\n\nRecovered spectra\n\n\nThe bundled synthetic example provides a lightweight sanity check for the current spectral smoothness and component-separation behavior.\n\n\n\n\n\nRecovered maps\n\n\nThe corresponding component-weight maps show how the decomposition couples the spectral basis to the spatial structure of the cube."
+    "section": "Real-Cube Benchmark",
+    "text": "Real-Cube Benchmark\n\n\n\nNGC1512 galaxy + compact sources + sky\n\n\nThe current benchmark uses NGC1512_cube_mockGCs.fits, a mixed IFU cube containing extended galaxy structure, compact GC-like sources, and sky contamination in the same field. The comparison applies the same outer-spaxel sky subtraction and matched preprocessing before fitting PCA, vanilla NMF, and the mixed spatial+sparse model.\n\n\n\n&lt;p class='benchmark-inline'&gt;On the saved NGC1512 benchmark, the mixed spatial+sparse fit reduces the vanilla NMF MSE from 0.000399 to 0.000322 while raising the designated compact-component top-1% concentration from 0.057 to 0.113.&lt;/p&gt;\n\n\n\nUse the benchmark page for the full figure, saved metrics, and the exact run configuration used to generate them.\n\n\nOpen the real-cube benchmark\n\n\n\n\nWhat the benchmark is for\n\n\nThis benchmark is intended as a technical validation target rather than a front-page showcase. It is useful for checking whether the mixed spatial+sparse prior improves compact-component concentration and preserves acceptable reconstruction quality under matched preprocessing.\n\n\n\nPCA remains the rank-(k) squared-error baseline.\n\n\nVanilla NMF provides the non-negative comparison without spatial coupling.\n\n\nSpaxNMF adds Gaussian spatial smoothing and optional sparse compact-source components.\n\n\nThe full figure, saved metrics, and run settings live on the benchmark page.\n\n\n\nUse the benchmark page when you want the detailed diagnostic, not the main landing-page overview."
   },
   {
     "objectID": "index.html#main-entry-points",

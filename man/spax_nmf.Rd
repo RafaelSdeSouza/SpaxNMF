@@ -54,7 +54,7 @@ reconstructed cubes, and prediction outputs.}
 penalty applied to the recovered component-weight maps.}
 
 \item{lambda_sparse}{Non-negative weight for an L1 sparsity penalty applied
-to selected spatial abundance columns.}
+to selected component-weight columns.}
 
 \item{spatial_sigma}{Positive kernel width in spaxels for the Gaussian
 spatial weighting. Nearby spaxels receive stronger coupling than distant
@@ -76,7 +76,7 @@ when it cannot be inferred from \code{x}.}
 A list with class \code{"spax_nmf"} containing:
 \itemize{
   \item \code{spatial}: component-weight matrix with one column per component.
-  \item \code{abundance}: alias of \code{spatial}.
+  \item \code{weights}: alias of \code{spatial}.
   \item \code{spectra}: component spectra with one row per component.
   \item \code{basis}: component spectra arranged as wavelength-by-component.
   \item \code{coef}: component weights arranged as component-by-spaxel.

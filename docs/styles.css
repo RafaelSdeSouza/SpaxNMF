@@ -170,6 +170,26 @@ pre,
   margin-bottom: 0;
 }
 
+.hero-list {
+  margin: 0.25rem 0 0 1.1rem;
+  padding: 0;
+}
+
+.hero-list li + li {
+  margin-top: 0.55rem;
+}
+
+.hero-card-note {
+  margin-top: 1rem;
+  color: rgba(16, 35, 57, 0.82);
+}
+
+.benchmark-inline {
+  font-size: 1.02rem;
+  line-height: 1.7;
+  color: var(--spax-ink);
+}
+
 .metric-ribbon,
 .feature-grid,
 .two-up,

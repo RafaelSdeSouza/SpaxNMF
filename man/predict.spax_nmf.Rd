@@ -2,7 +2,7 @@
 % Please edit documentation in R/spax_nmf.R
 \name{predict.spax_nmf}
 \alias{predict.spax_nmf}
-\title{Predict From a Fitted Spectral Unmixing Model}
+\title{Predict From a Fitted SpaxNMF Model}
 \usage{
 \method{predict}{spax_nmf}(
   object,
@@ -51,7 +51,7 @@ estimating component weights for new data. If \code{NULL}, the fitted
 object's sparsity penalties are reused.}
 
 \item{spatial_sigma}{Positive kernel width in spaxels for the Gaussian
-spatial weighting used during abundance estimation.}
+spatial weighting used during component-weight estimation.}
 
 \item{smooth_components}{Optional component indices that should receive the
 spatial smoothness prior when \code{lambda_spatial} is scalar.}
@@ -65,8 +65,9 @@ sparsity prior when \code{lambda_sparse} is scalar.}
 A numeric matrix or cube, depending on \code{type}.
 }
 \description{
-Uses the fitted component spectra to estimate component weights for new data,
-or returns the in-sample reconstruction when \code{newdata} is omitted.
+Uses the fitted component spectra to estimate component weights for new
+data, or returns the in-sample reconstruction when \code{newdata} is
+omitted.
 }
 \examples{
 \dontrun{
