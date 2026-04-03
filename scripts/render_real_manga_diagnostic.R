@@ -157,6 +157,15 @@ display_positive <- function(x) {
   x / s
 }
 
+display_smooth <- function(x, max_k = 11L) {
+  x <- as.numeric(x)
+  if (length(x) < 3L) {
+    return(x)
+  }
+
+  stats::runmed(x, k = odd_window(length(x), max_k = max_k), endrule = "median")
+}
+
 maps_long <- function(maps, model, component_names) {
   bind_rows(lapply(seq_along(maps), function(i) {
     map <- maps[[i]]
@@ -567,13 +576,19 @@ spectra_df <- bind_rows(
     setNames(component_names) |>
     mutate(wavelength = real_cube$wavelength) |>
     pivot_longer(cols = all_of(component_names), names_to = "component", values_to = "value") |>
-    mutate(model = "Vanilla NMF", value = ave(value, component, FUN = display_positive)),
+    mutate(model = "Vanilla NMF"),
   as.data.frame(t(fit_spatial$spectra)) |>
     setNames(component_names) |>
     mutate(wavelength = real_cube$wavelength) |>
     pivot_longer(cols = all_of(component_names), names_to = "component", values_to = "value") |>
-    mutate(model = "Spatial NMF", value = ave(value, component, FUN = display_positive))
+    mutate(model = "Spatial NMF")
 ) |>
+  group_by(model, component) |>
+  mutate(
+    raw_value = display_positive(value),
+    smooth_value = display_positive(display_smooth(value))
+  ) |>
+  ungroup() |>
   mutate(
     model = factor(model, levels = c("Vanilla NMF", "Spatial NMF")),
     component = factor(component, levels = component_names)
@@ -676,6 +691,39 @@ component_metrics <- bind_rows(
     sparse_target = component_names %in% component_names[sparse_idx]
   )
 )
+
+focus_idx <- if (length(sparse_idx)) {
+  sparse_idx
+} else {
+  order(spatial_top1, decreasing = TRUE)[seq_len(min(2L, k))]
+}
+focus_components <- component_names[focus_idx]
+focus_labels <- setNames(
+  paste0(focus_components, " (compact candidate)"),
+  focus_components
+)
+focus_summary <- paste(
+  vapply(focus_idx, function(i) {
+    sprintf(
+      "%s top 1%% %.3f -> %.3f",
+      component_names[i],
+      vanilla_top1[i],
+      spatial_top1[i]
+    )
+  }, character(1)),
+  collapse = " | "
+)
+
+focus_annotation <- component_metrics |>
+  filter(component %in% focus_components) |>
+  mutate(
+    model = factor(model, levels = c("Vanilla NMF", "Spatial NMF")),
+    component = factor(component, levels = focus_components),
+    panel_label = factor(focus_labels[component], levels = unname(focus_labels)),
+    x = max(real_cube$wavelength) - 0.03 * diff(range(real_cube$wavelength)),
+    y = c(0.96, 0.84)[as.integer(model)],
+    label = sprintf("Top 1%% = %.3f", top1pct)
+  )
 
 base_panel_theme <- theme(
   plot.title = element_text(face = "bold", size = 16),
@@ -804,9 +852,23 @@ if (!is.null(real_cube$sky)) {
   p_sky <- p_sky_spec | p_sky_map
 }
 
-p_spectra <- ggplot(spectra_df, aes(wavelength, value, color = model)) +
-  geom_line(linewidth = 1.0) +
-  facet_wrap(~ component, nrow = 1) +
+p_spectra <- ggplot(
+  subset(spectra_df, component %in% focus_components),
+  aes(wavelength, raw_value, color = model)
+) +
+  geom_line(linewidth = 0.55, alpha = 0.25) +
+  geom_line(aes(y = smooth_value), linewidth = 1.05) +
+  geom_text(
+    data = focus_annotation,
+    aes(x = x, y = y, label = label, color = model),
+    inherit.aes = FALSE,
+    hjust = 1,
+    vjust = 1,
+    size = 3.2,
+    fontface = "bold",
+    show.legend = FALSE
+  ) +
+  facet_wrap(~ panel_label, nrow = 1) +
   scale_color_manual(values = model_pal[c("Vanilla NMF", "Spatial NMF")]) +
   scale_x_continuous(
     breaks = c(4000, 5000, 6000, 7000, 8000),
@@ -818,10 +880,10 @@ p_spectra <- ggplot(spectra_df, aes(wavelength, value, color = model)) +
     expand = expansion(mult = c(0, 0.02))
   ) +
   labs(
-    title = "Recovered basis spectra on the IFU cube",
+    title = "Candidate compact-component spectra",
     subtitle = sprintf(
-      "Spatial NMF uses the weighted spatial prior; %s; component order is matched to vanilla NMF by spectral similarity",
-      prior_note
+      "Thin lines show the raw normalized spectra; thick lines are display-smoothed only. %s",
+      focus_summary
     ),
     x = expression(lambda ~ "[" * A * "]"),
     y = "Norm. flux",
@@ -831,21 +893,20 @@ p_spectra <- ggplot(spectra_df, aes(wavelength, value, color = model)) +
   base_panel_theme +
   theme(legend.position = "top")
 
-p_maps <- ggplot(maps_df, aes(ix, iy, fill = value)) +
+p_maps <- ggplot(
+  subset(maps_df, component %in% focus_components),
+  aes(ix, iy, fill = value)
+) +
   geom_tile() +
   facet_grid(model ~ component) +
   scale_fill_gradientn(colors = map_pal, limits = c(0, 1), guide = "none") +
   coord_equal() +
   labs(
-    title = "Recovered component-weight maps",
+    title = "Candidate compact-component maps",
     subtitle = sprintf(
-      "%s | crop = %dx%d | wave bins = %d | restarts = %d | niter = %d",
+      "%s | %s",
       basename(real_cube$path),
-      real_cube$nx,
-      real_cube$ny,
-      length(real_cube$wavelength),
-      length(fit_seeds),
-      fit_niter
+      focus_summary
     ),
     x = NULL,
     y = NULL
@@ -896,7 +957,7 @@ fig <- if (is.null(p_sky)) {
     plot_layout(heights = c(0.9, 0.9, 1.4, 0.8))
 } else {
   p_examples / p_sky / p_spectra / p_maps / p_resid +
-    plot_layout(heights = c(0.9, 0.8, 0.9, 1.4, 0.8))
+    plot_layout(heights = c(0.9, 0.8, 1.0, 1.1, 0.8))
 }
 
 fig <- fig +
