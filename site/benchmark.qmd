@@ -13,7 +13,7 @@ bench_components <- if (file.exists(component_path)) read.csv(component_path, st
 
 This benchmark uses `NGC1512_cube_mockGCs.fits`, a mixed cube containing
 extended galaxy structure, compact GC-like sources, and sky contamination in
-the same field. The current benchmark is designed to answer two questions:
+the same field. It is designed to answer two practical questions:
 
 1. How much reconstruction quality is lost relative to PCA?
 2. Does the mixed smooth+sparse spatial prior produce more concentrated compact components than vanilla NMF?
@@ -25,8 +25,8 @@ extended components, and sparse priors for the designated compact components.
 
 ## Current Figure
 
-If the benchmark outputs are present in the repository, the latest figure is
-shown below.
+The saved figure emphasizes the candidate compact components, their
+component-weight maps, and a residual-energy comparison at fixed rank.
 
 ```{r}
 if (file.exists("images/ngc1512-benchmark.png")) {
@@ -58,6 +58,13 @@ if (!is.null(bench)) {
 carried by the brightest 1% or 5% of map pixels. Higher values indicate more
 concentrated maps. For the designated sparse components, the
 `sparse_top1pct` and `sparse_top5pct` columns isolate that concentration test.
+
+## How To Read The Figure
+
+- The reconstruction panel checks whether the mixed prior preserves acceptable spaxel-level fits.
+- The compact-component spectra panel highlights the designated sparse candidates rather than all components at once.
+- The compact-component maps panel is the main spatial diagnostic for whether the sparse prior is isolating localized structure.
+- The residual-energy panel is secondary: PCA is expected to win on pure rank-\(k\) squared-error reconstruction.
 
 ```{r}
 if (!is.null(bench)) {

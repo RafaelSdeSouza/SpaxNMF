@@ -18,8 +18,8 @@ where:
 - \(S \in \mathbb{R}_{\ge 0}^{k \times p}\) contains the component spectra
 - \(k\) is the chosen factorization rank
 
-`A` should be interpreted as a set of component-weight maps, not as chemical
-abundances.
+`A` should be interpreted simply as a set of component-weight maps over the
+field.
 
 ## Objective Function
 

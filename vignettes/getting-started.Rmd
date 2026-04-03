@@ -40,7 +40,7 @@ plot(fit, type = "loss")
 
 ## Recover component maps
 
-Once the fit is available, abundance columns can be reshaped back into image
+Once the fit is available, component-weight columns can be reshaped back into image
 planes for inspection.
 
 ```{r, eval = FALSE}

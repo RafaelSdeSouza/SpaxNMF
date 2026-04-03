@@ -3,6 +3,36 @@ title: "SpaxNMF"
 page-layout: full
 ---
 
+```{r}
+index_summary_path <- "data/ngc1512-benchmark-summary.csv"
+index_component_path <- "data/ngc1512-benchmark-components.csv"
+index_bench <- if (file.exists(index_summary_path)) {
+  read.csv(index_summary_path, stringsAsFactors = FALSE)
+} else {
+  NULL
+}
+index_components <- if (file.exists(index_component_path)) {
+  read.csv(index_component_path, stringsAsFactors = FALSE)
+} else {
+  NULL
+}
+
+index_snapshot <- NULL
+if (!is.null(index_bench)) {
+  vanilla_row <- index_bench[index_bench$model == "Vanilla NMF", , drop = FALSE]
+  spatial_row <- index_bench[index_bench$model == "Spatial NMF", , drop = FALSE]
+  if (nrow(vanilla_row) && nrow(spatial_row)) {
+    index_snapshot <- sprintf(
+      "On the saved NGC1512 benchmark, the mixed spatial+sparse fit reduces the vanilla NMF MSE from %.3g to %.3g while raising the designated compact-component top-1%% concentration from %.3f to %.3f.",
+      vanilla_row$mse,
+      spatial_row$mse,
+      vanilla_row$sparse_top1pct,
+      spatial_row$sparse_top1pct
+    )
+  }
+}
+```
+
 ::: {.hero-shell}
 <div class="hero-grid">
 <div>
@@ -18,25 +48,23 @@ optional sparse priors for compact sources.
 
 <div class="hero-actions">
   <a class="hero-button hero-primary" href="getting-started.html">Get Started</a>
-  <a class="hero-button hero-secondary" href="model.html">See the Equations</a>
+  <a class="hero-button hero-secondary" href="benchmark.html">See the Benchmark</a>
 </div>
 </div>
 
 <div class="hero-card">
-<h3>Implemented objective</h3>
+<h3>What the spatial model adds</h3>
 
-$$
-\mathcal{L}(A,S)=
-\|X-AS\|_F^2
-+\lambda_S \|DS\|_F^2
-+\sum_c \lambda_{A,c}\sum_{i,j} w_{ij}(A_{ic}-A_{jc})^2
-+\sum_c \lambda_{C,c}\|A_{:,c}\|_1
-$$
+<ul class="hero-list">
+<li>Shared non-negative component spectra recovered from the full cube.</li>
+<li>Gaussian spatial coupling on component-weight maps for extended structure.</li>
+<li>Optional sparse priors for compact-source components such as GC-like signals.</li>
+<li>Real-cube diagnostics against PCA and vanilla NMF under matched preprocessing.</li>
+</ul>
 
-<p>
-<code>A</code> contains component weights, not chemical abundances. The spatial
-term regularizes those weights across neighboring spaxels through
-Gaussian kernel weights <code>w<sub>ij</sub></code>.
+<p class="hero-card-note">
+The full objective, kernel weighting, and optimization details are documented
+on the <a href="model.html">Model</a> page.
 </p>
 </div>
 </div>
@@ -132,27 +160,49 @@ flowchart LR
   G --> J["predict(type = 'cube') / fitted()"]
 ```
 
-## Example Outputs
+## Real-Cube Benchmark
 
 <div class="two-up">
 <div class="info-panel">
-<h3>Recovered spectra</h3>
+<h3>NGC1512 galaxy + compact sources + sky</h3>
 <p>
-The bundled synthetic example provides a lightweight sanity check for the
-current spectral smoothness and component-separation behavior.
+The current benchmark uses <code>NGC1512_cube_mockGCs.fits</code>, a mixed IFU
+cube containing extended galaxy structure, compact GC-like sources, and sky
+contamination in the same field. The comparison applies the same outer-spaxel
+sky subtraction and matched preprocessing before fitting PCA, vanilla NMF, and
+the mixed spatial+sparse model.
 </p>
 
-![](images/simulated-spectra.png)
+```{r}
+if (!is.null(index_snapshot)) {
+  cat(sprintf("<p class='benchmark-inline'>%s</p>", index_snapshot))
+} else {
+  cat("<p class='benchmark-inline'>The repository includes a reproducible real-cube benchmark that compares reconstruction quality and compact-component concentration under the same preprocessing.</p>")
+}
+```
+
+<p class="hero-card-note">
+Use the benchmark page for the full figure, saved metrics, and the exact run
+configuration used to generate them.
+</p>
+
+<p><a href="benchmark.html">Open the real-cube benchmark</a></p>
 </div>
 
 <div class="info-panel">
-<h3>Recovered maps</h3>
+<h3>Saved benchmark output</h3>
 <p>
-The corresponding component-weight maps show how the decomposition couples the
-spectral basis to the spatial structure of the cube.
+The figure below is generated directly from the repository benchmark script and
+is updated whenever the saved benchmark outputs are refreshed.
 </p>
 
-![](images/simulated-maps.png)
+```{r}
+if (file.exists("images/ngc1512-benchmark.png")) {
+  knitr::include_graphics("images/ngc1512-benchmark.png")
+} else {
+  cat("Benchmark figure not found in `docs/images/` yet.")
+}
+```
 </div>
 </div>
 

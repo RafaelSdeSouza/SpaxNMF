@@ -327,7 +327,7 @@ matrix_to_cube <- function(x, nx, ny, metadata = NULL) {
 
 #' Extract a Component Map
 #'
-#' Reshapes one abundance column from a fitted model into an image plane.
+#' Reshapes one component-weight column from a fitted model into an image plane.
 #'
 #' @param fit Result from [spax_nmf()].
 #' @param nx Number of x-axis pixels.
@@ -556,7 +556,7 @@ cube_metadata <- function(object) {
   metadata
 }
 
-#' Summarize a Spectral Unmixing Fit
+#' Summarize a SpaxNMF Fit
 #'
 #' @param object Result from [spax_nmf()].
 #' @param ... Unused.
@@ -626,7 +626,7 @@ basis.spax_nmf <- function(object, ...) {
   t(object$spectra)
 }
 
-#' Extract Abundance Coefficients
+#' Extract Component-Weight Coefficients
 #'
 #' Returns the component weights arranged as component-by-spaxel, similar to the
 #' coefficient matrix used by NMF interfaces.
@@ -714,10 +714,11 @@ residuals.spax_nmf <- function(object, x, nx = NULL, ny = NULL, ...) {
   matrix_to_cube(residual, nx = nx, ny = ny, metadata = object$metadata)
 }
 
-#' Predict From a Fitted Spectral Unmixing Model
+#' Predict From a Fitted SpaxNMF Model
 #'
-#' Uses the fitted component spectra to estimate component weights for new data,
-#' or returns the in-sample reconstruction when \code{newdata} is omitted.
+#' Uses the fitted component spectra to estimate component weights for new
+#' data, or returns the in-sample reconstruction when \code{newdata} is
+#' omitted.
 #'
 #' @param object Result from [spax_nmf()].
 #' @param newdata Optional new matrix or cube.
@@ -732,7 +733,7 @@ residuals.spax_nmf <- function(object, x, nx = NULL, ny = NULL, ...) {
 #'   estimating component weights for new data. If \code{NULL}, the fitted
 #'   object's sparsity penalties are reused.
 #' @param spatial_sigma Positive kernel width in spaxels for the Gaussian
-#'   spatial weighting used during abundance estimation.
+#'   spatial weighting used during component-weight estimation.
 #' @param smooth_components Optional component indices that should receive the
 #'   spatial smoothness prior when \code{lambda_spatial} is scalar.
 #' @param sparse_components Optional component indices that should receive the

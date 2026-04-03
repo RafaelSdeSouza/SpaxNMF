@@ -214,6 +214,13 @@ component_concentration <- function(spatial, nx, ny, fraction = 0.01) {
   }, numeric(1))
 }
 
+top_weight_spectrum <- function(x, weights, fraction = 0.01) {
+  n_top <- max(1L, ceiling(length(weights) * fraction))
+  idx <- order(weights, decreasing = TRUE)[seq_len(min(length(weights), n_top))]
+  spectrum <- apply(x[idx, , drop = FALSE], 2, stats::median, na.rm = TRUE)
+  display_positive(display_smooth(spectrum, max_k = 15L))
+}
+
 pick_default_cube <- function() {
   candidates <- c(
     Sys.getenv("SPAXNMF_REAL_CUBE", unset = ""),
@@ -702,6 +709,7 @@ focus_labels <- setNames(
   paste0(focus_components, " (compact candidate)"),
   focus_components
 )
+focus_panel_levels <- unname(focus_labels)
 focus_summary <- paste(
   vapply(focus_idx, function(i) {
     sprintf(
@@ -719,11 +727,27 @@ focus_annotation <- component_metrics |>
   mutate(
     model = factor(model, levels = c("Vanilla NMF", "Spatial NMF")),
     component = factor(component, levels = focus_components),
-    panel_label = factor(focus_labels[component], levels = unname(focus_labels)),
+    panel_label = factor(focus_labels[component], levels = focus_panel_levels),
     x = max(real_cube$wavelength) - 0.03 * diff(range(real_cube$wavelength)),
     y = c(0.96, 0.84)[as.integer(model)],
     label = sprintf("Top 1%% = %.3f", top1pct)
   )
+
+focus_basis_df <- spectra_df |>
+  filter(component %in% focus_components) |>
+  mutate(
+    component = factor(component, levels = focus_components),
+    panel_label = factor(focus_labels[component], levels = focus_panel_levels)
+  )
+
+focus_observed_df <- bind_rows(lapply(focus_idx, function(i) {
+  tibble(
+    wavelength = real_cube$wavelength,
+    value = top_weight_spectrum(real_cube$matrix, fit_spatial$spatial[, i], fraction = 0.01),
+    component = factor(component_names[i], levels = focus_components),
+    panel_label = factor(focus_labels[[component_names[i]]], levels = focus_panel_levels)
+  )
+}))
 
 base_panel_theme <- theme(
   plot.title = element_text(face = "bold", size = 16),
@@ -853,11 +877,19 @@ if (!is.null(real_cube$sky)) {
 }
 
 p_spectra <- ggplot(
-  subset(spectra_df, component %in% focus_components),
+  focus_basis_df,
   aes(wavelength, raw_value, color = model)
 ) +
   geom_line(linewidth = 0.55, alpha = 0.25) +
   geom_line(aes(y = smooth_value), linewidth = 1.05) +
+  geom_line(
+    data = focus_observed_df,
+    aes(wavelength, value),
+    inherit.aes = FALSE,
+    color = "#111111",
+    linewidth = 0.95,
+    linetype = "22"
+  ) +
   geom_text(
     data = focus_annotation,
     aes(x = x, y = y, label = label, color = model),
@@ -882,7 +914,7 @@ p_spectra <- ggplot(
   labs(
     title = "Candidate compact-component spectra",
     subtitle = sprintf(
-      "Thin lines show the raw normalized spectra; thick lines are display-smoothed only. %s",
+      "Colored curves are recovered basis spectra; the dashed black line is the median sky-cleaned spectrum of the top 1%% spatial-NMF pixels for each candidate. %s",
       focus_summary
     ),
     x = expression(lambda ~ "[" * A * "]"),
@@ -894,11 +926,12 @@ p_spectra <- ggplot(
   theme(legend.position = "top")
 
 p_maps <- ggplot(
-  subset(maps_df, component %in% focus_components),
+  subset(maps_df, component %in% focus_components) |>
+    mutate(panel_label = factor(focus_labels[component], levels = focus_panel_levels)),
   aes(ix, iy, fill = value)
 ) +
   geom_tile() +
-  facet_grid(model ~ component) +
+  facet_grid(model ~ panel_label) +
   scale_fill_gradientn(colors = map_pal, limits = c(0, 1), guide = "none") +
   coord_equal() +
   labs(
