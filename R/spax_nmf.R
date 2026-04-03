@@ -17,7 +17,7 @@
 #' @param lambda_spatial Non-negative weight for the grid-based smoothness
 #'   penalty applied to the recovered component-weight maps.
 #' @param lambda_sparse Non-negative weight for an L1 sparsity penalty applied
-#'   to selected spatial abundance columns.
+#'   to selected component-weight columns.
 #' @param spatial_sigma Positive kernel width in spaxels for the Gaussian
 #'   spatial weighting. Nearby spaxels receive stronger coupling than distant
 #'   ones.
@@ -43,7 +43,7 @@
 #' @return A list with class \code{"spax_nmf"} containing:
 #' \itemize{
 #'   \item \code{spatial}: component-weight matrix with one column per component.
-#'   \item \code{abundance}: alias of \code{spatial}.
+#'   \item \code{weights}: alias of \code{spatial}.
 #'   \item \code{spectra}: component spectra with one row per component.
 #'   \item \code{basis}: component spectra arranged as wavelength-by-component.
 #'   \item \code{coef}: component weights arranged as component-by-spaxel.
@@ -227,6 +227,7 @@ spax_nmf <- function(x,
 
   fit <- list(
     spatial = spatial,
+    weights = spatial,
     abundance = spatial,
     spectra = spectra,
     basis = t(spectra),
