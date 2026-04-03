@@ -1,4 +1,4 @@
-source("R/spectral_unmix.R")
+source("R/spax_nmf.R")
 
 dir.create("site/images", recursive = TRUE, showWarnings = FALSE)
 
@@ -91,7 +91,7 @@ fit <- list(
   scale = FALSE,
   call = quote(simulate_ifu_cube())
 )
-class(fit) <- "spectral_unmix"
+class(fit) <- "spax_nmf"
 
 grDevices::png(
   filename = "site/images/simulated-spectra.png",

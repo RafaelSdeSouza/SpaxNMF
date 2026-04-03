@@ -31,7 +31,7 @@ cube_metadata(object)
 
 \item{metadata}{Optional metadata list to attach to the returned cube.}
 
-\item{fit}{Result from \code{spectral_unmix()}.}
+\item{fit}{Result from \code{spax_nmf()}.}
 
 \item{component}{Component index to extract.}
 
@@ -64,7 +64,7 @@ x <- cube_to_matrix(demo$cube)
 rebuilt <- matrix_to_cube(x, demo$nx, demo$ny)
 dim(rebuilt)
 \dontrun{
-fit <- spectral_unmix(x, k = 3, niter = 50)
+fit <- spax_nmf(x, k = 3, niter = 50)
 img <- component_map(fit, demo$nx, demo$ny, 2)
 spec2 <- component_spectrum(fit, 2)
 comp2 <- component_reconstruction(fit, 2, nx = demo$nx, ny = demo$ny)

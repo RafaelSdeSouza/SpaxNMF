@@ -17,7 +17,7 @@ Mat <- pmax(Mat, 0)
 ## Fit and inspect
 
 ```{r, eval = FALSE}
-fit <- spectral_unmix(Mat, k = 5, lr = 0.01, niter = 5000)
+fit <- spax_nmf(Mat, k = 5, lr = 0.01, niter = 5000)
 
 plot(fit, type = "spectra")
 plot(fit, type = "maps", nx = dim(X$imDat)[1], ny = dim(X$imDat)[2])
@@ -53,7 +53,7 @@ entries are carried forward as metadata. That metadata can be recovered from
 the fitted object or reconstructed cube with `cube_metadata()`.
 
 ```{r, eval = FALSE}
-fit <- spectral_unmix(Mat, k = 5, lr = 0.01, niter = 5000)
+fit <- spax_nmf(Mat, k = 5, lr = 0.01, niter = 5000)
 cube_metadata(fit)
 cube_metadata(cube_hat)
 ```

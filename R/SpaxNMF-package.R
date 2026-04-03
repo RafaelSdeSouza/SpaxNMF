@@ -8,7 +8,7 @@
 #' \enumerate{
 #'   \item simulate or ingest a spectral cube;
 #'   \item reshape it with [cube_to_matrix()];
-#'   \item fit a low-rank unmixing model with [spectral_unmix()];
+#'   \item fit a low-rank unmixing model with [spax_nmf()];
 #'   \item inspect component spectra and abundance maps.
 #' }
 #'

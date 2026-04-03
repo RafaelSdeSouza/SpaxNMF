@@ -40,7 +40,7 @@
 #' @param metadata Optional metadata list to carry through the fitted object,
 #'   reconstructed cubes, and prediction outputs.
 #'
-#' @return A list with class \code{"spectral_unmix"} containing:
+#' @return A list with class \code{"spax_nmf"} containing:
 #' \itemize{
 #'   \item \code{spatial}: abundance matrix with one column per component.
 #'   \item \code{abundance}: alias of \code{spatial}.
@@ -73,7 +73,7 @@
 #' For the current package workflow, a typical sequence is:
 #' \enumerate{
 #'   \item reshape a cube with [cube_to_matrix()];
-#'   \item fit the model with \code{spectral_unmix()};
+#'   \item fit the model with \code{spax_nmf()};
 #'   \item recover component maps with [component_map()].
 #' }
 #'
@@ -83,14 +83,14 @@
 #'
 #' @examples
 #' cube <- simulate_ifu_cube(nx = 12, ny = 12, n_wave = 80)
-#' fit <- spectral_unmix(cube$matrix, k = 3, niter = 150, lr = 0.03)
+#' fit <- spax_nmf(cube$matrix, k = 3, niter = 150, lr = 0.03)
 #' print(fit)
 #'
 #' map1 <- component_map(fit, nx = cube$nx, ny = cube$ny, component = 1)
 #' dim(map1)
 #'
 #' @export
-spectral_unmix <- function(x,
+spax_nmf <- function(x,
                            k = 3,
                            lambda_smooth = 0.01,
                            lr = 0.02,
@@ -108,7 +108,7 @@ spectral_unmix <- function(x,
                            nx = NULL,
                            ny = NULL) {
   if (!requireNamespace("torch", quietly = TRUE)) {
-    stop("The 'torch' package must be installed to use spectral_unmix().", call. = FALSE)
+    stop("The 'torch' package must be installed to use spax_nmf().", call. = FALSE)
   }
 
   input_metadata <- merge_metadata(extract_matrix_metadata(x), metadata)
@@ -249,14 +249,14 @@ spectral_unmix <- function(x,
     call = match.call()
   )
 
-  class(fit) <- "spectral_unmix"
+  class(fit) <- "spax_nmf"
   fit
 }
 
 #' Reshape a Spectral Cube Into a Matrix
 #'
 #' Converts a three-dimensional array with dimensions \code{nx x ny x n_wave}
-#' into a matrix suitable for [spectral_unmix()], with one row per spaxel.
+#' into a matrix suitable for [spax_nmf()], with one row per spaxel.
 #'
 #' @param cube Numeric 3D array, or a list-like object containing a cube in
 #'   \code{$imDat} or \code{$cube}.
@@ -280,7 +280,7 @@ cube_to_matrix <- function(cube) {
 
   dims <- dim(cube)
   x <- matrix(cube, nrow = dims[1L] * dims[2L], ncol = dims[3L], byrow = FALSE)
-  attr(x, "spectral_unmix_metadata") <- metadata
+  attr(x, "spax_nmf_metadata") <- metadata
   attr(x, "spectral_unmix_dim") <- dims[1:2]
   x
 }
@@ -319,7 +319,7 @@ matrix_to_cube <- function(x, nx, ny, metadata = NULL) {
   cube <- array(x, dim = c(nx, ny, ncol(x)))
   cube_metadata <- merge_metadata(extract_matrix_metadata(x), metadata)
   if (length(cube_metadata) > 0L) {
-    attr(cube, "spectral_unmix_metadata") <- cube_metadata
+    attr(cube, "spax_nmf_metadata") <- cube_metadata
   }
   cube
 }
@@ -328,7 +328,7 @@ matrix_to_cube <- function(x, nx, ny, metadata = NULL) {
 #'
 #' Reshapes one abundance column from a fitted model into an image plane.
 #'
-#' @param fit Result from [spectral_unmix()].
+#' @param fit Result from [spax_nmf()].
 #' @param nx Number of x-axis pixels.
 #' @param ny Number of y-axis pixels.
 #' @param component Component index to extract.
@@ -336,13 +336,13 @@ matrix_to_cube <- function(x, nx, ny, metadata = NULL) {
 #' @return A numeric matrix of size \code{nx x ny}.
 #' @examples
 #' cube <- simulate_ifu_cube(nx = 6, ny = 5, n_wave = 20)
-#' fit <- spectral_unmix(cube$matrix, k = 3, niter = 50)
+#' fit <- spax_nmf(cube$matrix, k = 3, niter = 50)
 #' img <- component_map(fit, cube$nx, cube$ny, 2)
 #' dim(img)
 #' @export
 component_map <- function(fit, nx, ny, component = 1) {
-  if (!inherits(fit, "spectral_unmix")) {
-    stop("'fit' must be a result from spectral_unmix().", call. = FALSE)
+  if (!inherits(fit, "spax_nmf")) {
+    stop("'fit' must be a result from spax_nmf().", call. = FALSE)
   }
   if (!is.numeric(nx) || length(nx) != 1L || nx < 1L ||
       !is.numeric(ny) || length(ny) != 1L || ny < 1L) {
@@ -361,20 +361,20 @@ component_map <- function(fit, nx, ny, component = 1) {
 #'
 #' Returns one recovered component spectrum from a fitted model.
 #'
-#' @param fit Result from [spectral_unmix()].
+#' @param fit Result from [spax_nmf()].
 #' @param component Component index to extract.
 #'
 #' @return A numeric vector.
 #' @examples
 #' \dontrun{
 #' cube <- simulate_ifu_cube(nx = 6, ny = 5, n_wave = 20)
-#' fit <- spectral_unmix(cube$matrix, k = 3, niter = 50)
+#' fit <- spax_nmf(cube$matrix, k = 3, niter = 50)
 #' spec1 <- component_spectrum(fit, 1)
 #' }
 #' @export
 component_spectrum <- function(fit, component = 1) {
-  if (!inherits(fit, "spectral_unmix")) {
-    stop("'fit' must be a result from spectral_unmix().", call. = FALSE)
+  if (!inherits(fit, "spax_nmf")) {
+    stop("'fit' must be a result from spax_nmf().", call. = FALSE)
   }
   if (!is.numeric(component) || length(component) != 1L || component < 1L ||
       component > nrow(fit$spectra)) {
@@ -389,7 +389,7 @@ component_spectrum <- function(fit, component = 1) {
 #' Builds the contribution from one component, either as a spaxel-by-wavelength
 #' matrix or, when dimensions are supplied, as a spectral cube.
 #'
-#' @param fit Result from [spectral_unmix()].
+#' @param fit Result from [spax_nmf()].
 #' @param component Component index to reconstruct.
 #' @param nx Optional x-axis size for cube output.
 #' @param ny Optional y-axis size for cube output.
@@ -399,14 +399,14 @@ component_spectrum <- function(fit, component = 1) {
 #' @examples
 #' \dontrun{
 #' cube <- simulate_ifu_cube(nx = 6, ny = 5, n_wave = 20)
-#' fit <- spectral_unmix(cube$matrix, k = 3, niter = 50)
+#' fit <- spax_nmf(cube$matrix, k = 3, niter = 50)
 #' comp1 <- component_reconstruction(fit, 1)
 #' comp1_cube <- component_reconstruction(fit, 1, nx = cube$nx, ny = cube$ny)
 #' }
 #' @export
 component_reconstruction <- function(fit, component = 1, nx = NULL, ny = NULL) {
-  if (!inherits(fit, "spectral_unmix")) {
-    stop("'fit' must be a result from spectral_unmix().", call. = FALSE)
+  if (!inherits(fit, "spax_nmf")) {
+    stop("'fit' must be a result from spax_nmf().", call. = FALSE)
   }
   if (!is.numeric(component) || length(component) != 1L || component < 1L ||
       component > nrow(fit$spectra)) {
@@ -511,7 +511,7 @@ simulate_ifu_cube <- function(nx = 20, ny = 20, n_wave = 120, noise = 0.01) {
 #' @export
 demo_ifu_unmix <- function(k = 3, nx = 18, ny = 18, n_wave = 120, niter = 300, plot = interactive()) {
   demo <- simulate_ifu_cube(nx = nx, ny = ny, n_wave = n_wave)
-  fit <- spectral_unmix(demo$matrix, k = k, niter = niter)
+  fit <- spax_nmf(demo$matrix, k = k, niter = niter)
 
   if (isTRUE(plot)) {
     plot(fit, type = "spectra", wavelength = demo$wavelength)
@@ -522,8 +522,8 @@ demo_ifu_unmix <- function(k = 3, nx = 18, ny = 18, n_wave = 120, niter = 300, p
 }
 
 #' @export
-print.spectral_unmix <- function(x, ...) {
-  cat("<spectral_unmix>\n", sep = "")
+print.spax_nmf <- function(x, ...) {
+  cat("<spax_nmf>\n", sep = "")
   cat(sprintf("  spaxels: %d\n", nrow(x$spatial)))
   cat(sprintf("  wavelength channels: %d\n", ncol(x$spectra)))
   cat(sprintf("  components: %d\n", nrow(x$spectra)))
@@ -534,7 +534,7 @@ print.spectral_unmix <- function(x, ...) {
 #' Return Stored Metadata
 #'
 #' Retrieves metadata carried by matrices, cubes, or fitted
-#' \code{"spectral_unmix"} objects.
+#' \code{"spax_nmf"} objects.
 #'
 #' @param object Matrix, cube, or fitted object.
 #'
@@ -544,31 +544,35 @@ print.spectral_unmix <- function(x, ...) {
 #' cube_metadata(demo$cube)
 #' @export
 cube_metadata <- function(object) {
-  if (inherits(object, "spectral_unmix")) {
+  if (inherits(object, "spax_nmf")) {
     return(object$metadata)
   }
 
-  attr(object, "spectral_unmix_metadata", exact = TRUE)
+  metadata <- attr(object, "spax_nmf_metadata", exact = TRUE)
+  if (is.null(metadata)) {
+    metadata <- attr(object, "spectral_unmix_metadata", exact = TRUE)
+  }
+  metadata
 }
 
 #' Summarize a Spectral Unmixing Fit
 #'
-#' @param object Result from [spectral_unmix()].
+#' @param object Result from [spax_nmf()].
 #' @param ... Unused.
 #'
-#' @return A list with class \code{"summary.spectral_unmix"}.
+#' @return A list with class \code{"summary.spax_nmf"}.
 #' @examples
 #' fake <- list(
 #'   spatial = matrix(runif(12), 4, 3),
 #'   spectra = matrix(runif(15), 3, 5),
 #'   loss = c(3, 2, 1)
 #' )
-#' class(fake) <- "spectral_unmix"
+#' class(fake) <- "spax_nmf"
 #' summary(fake)
 #' @export
-summary.spectral_unmix <- function(object, ...) {
-  if (!inherits(object, "spectral_unmix")) {
-    stop("'object' must be a result from spectral_unmix().", call. = FALSE)
+summary.spax_nmf <- function(object, ...) {
+  if (!inherits(object, "spax_nmf")) {
+    stop("'object' must be a result from spax_nmf().", call. = FALSE)
   }
 
   summary_object <- list(
@@ -579,12 +583,12 @@ summary.spectral_unmix <- function(object, ...) {
     n_iter = length(object$loss)
   )
 
-  class(summary_object) <- "summary.spectral_unmix"
+  class(summary_object) <- "summary.spax_nmf"
   summary_object
 }
 
 #' @export
-print.summary.spectral_unmix <- function(x, ...) {
+print.summary.spax_nmf <- function(x, ...) {
   cat("SpaxNMF summary\n")
   cat(sprintf("  spaxels: %d\n", x$n_spaxels))
   cat(sprintf("  wavelength channels: %d\n", x$n_wave))
@@ -599,13 +603,13 @@ print.summary.spectral_unmix <- function(x, ...) {
 #' Returns the component spectra arranged as wavelength-by-component, similar to
 #' a basis matrix in NMF software interfaces.
 #'
-#' @param object Result from [spectral_unmix()].
+#' @param object Result from [spax_nmf()].
 #' @param ... Unused.
 #'
 #' @return A numeric matrix with wavelengths in rows and components in columns.
 #' @examples
 #' fake <- list(spectra = matrix(runif(15), 3, 5))
-#' class(fake) <- "spectral_unmix"
+#' class(fake) <- "spax_nmf"
 #' basis(fake)
 #' @export
 basis <- function(object, ...) {
@@ -613,9 +617,9 @@ basis <- function(object, ...) {
 }
 
 #' @export
-basis.spectral_unmix <- function(object, ...) {
-  if (!inherits(object, "spectral_unmix")) {
-    stop("'object' must be a result from spectral_unmix().", call. = FALSE)
+basis.spax_nmf <- function(object, ...) {
+  if (!inherits(object, "spax_nmf")) {
+    stop("'object' must be a result from spax_nmf().", call. = FALSE)
   }
 
   t(object$spectra)
@@ -626,18 +630,18 @@ basis.spectral_unmix <- function(object, ...) {
 #' Returns the component weights arranged as component-by-spaxel, similar to the
 #' coefficient matrix used by NMF interfaces.
 #'
-#' @param object Result from [spectral_unmix()].
+#' @param object Result from [spax_nmf()].
 #' @param ... Unused.
 #'
 #' @return A numeric matrix with components in rows and spaxels in columns.
 #' @examples
 #' fake <- list(spatial = matrix(runif(12), 4, 3))
-#' class(fake) <- "spectral_unmix"
+#' class(fake) <- "spax_nmf"
 #' coef(fake)
 #' @export
-coef.spectral_unmix <- function(object, ...) {
-  if (!inherits(object, "spectral_unmix")) {
-    stop("'object' must be a result from spectral_unmix().", call. = FALSE)
+coef.spax_nmf <- function(object, ...) {
+  if (!inherits(object, "spax_nmf")) {
+    stop("'object' must be a result from spax_nmf().", call. = FALSE)
   }
 
   t(object$spatial)
@@ -645,7 +649,7 @@ coef.spectral_unmix <- function(object, ...) {
 
 #' Return the Fitted Reconstruction
 #'
-#' @param object Result from [spectral_unmix()].
+#' @param object Result from [spax_nmf()].
 #' @param nx Optional x-axis size for cube output.
 #' @param ny Optional y-axis size for cube output.
 #' @param ... Unused.
@@ -654,12 +658,12 @@ coef.spectral_unmix <- function(object, ...) {
 #' supplied.
 #' @examples
 #' fake <- list(reconstruction = matrix(runif(20), 4, 5))
-#' class(fake) <- "spectral_unmix"
+#' class(fake) <- "spax_nmf"
 #' fitted(fake)
 #' @export
-fitted.spectral_unmix <- function(object, nx = NULL, ny = NULL, ...) {
-  if (!inherits(object, "spectral_unmix")) {
-    stop("'object' must be a result from spectral_unmix().", call. = FALSE)
+fitted.spax_nmf <- function(object, nx = NULL, ny = NULL, ...) {
+  if (!inherits(object, "spax_nmf")) {
+    stop("'object' must be a result from spax_nmf().", call. = FALSE)
   }
 
   if (is.null(nx) && is.null(ny)) {
@@ -674,7 +678,7 @@ fitted.spectral_unmix <- function(object, nx = NULL, ny = NULL, ...) {
 
 #' Compute Residuals
 #'
-#' @param object Result from [spectral_unmix()].
+#' @param object Result from [spax_nmf()].
 #' @param x Numeric matrix originally used for the fit.
 #' @param nx Optional x-axis size for cube output.
 #' @param ny Optional y-axis size for cube output.
@@ -684,13 +688,13 @@ fitted.spectral_unmix <- function(object, nx = NULL, ny = NULL, ...) {
 #' supplied.
 #' @examples
 #' fake <- list(reconstruction = matrix(runif(20), 4, 5))
-#' class(fake) <- "spectral_unmix"
+#' class(fake) <- "spax_nmf"
 #' x <- matrix(runif(20), 4, 5)
 #' residuals(fake, x = x)
 #' @export
-residuals.spectral_unmix <- function(object, x, nx = NULL, ny = NULL, ...) {
-  if (!inherits(object, "spectral_unmix")) {
-    stop("'object' must be a result from spectral_unmix().", call. = FALSE)
+residuals.spax_nmf <- function(object, x, nx = NULL, ny = NULL, ...) {
+  if (!inherits(object, "spax_nmf")) {
+    stop("'object' must be a result from spax_nmf().", call. = FALSE)
   }
 
   x <- validate_input_matrix(x)
@@ -714,7 +718,7 @@ residuals.spectral_unmix <- function(object, x, nx = NULL, ny = NULL, ...) {
 #' Uses the fitted component spectra to estimate abundance weights for new data,
 #' or returns the in-sample reconstruction when \code{newdata} is omitted.
 #'
-#' @param object Result from [spectral_unmix()].
+#' @param object Result from [spax_nmf()].
 #' @param newdata Optional new matrix or cube.
 #' @param type Prediction target: \code{"reconstruction"}, \code{"spatial"},
 #'   or \code{"cube"}.
@@ -742,12 +746,12 @@ residuals.spectral_unmix <- function(object, x, nx = NULL, ny = NULL, ...) {
 #' @examples
 #' \dontrun{
 #' demo <- simulate_ifu_cube(nx = 6, ny = 5, n_wave = 20)
-#' fit <- spectral_unmix(demo$matrix, k = 3, niter = 50)
+#' fit <- spax_nmf(demo$matrix, k = 3, niter = 50)
 #' fitted_x <- predict(fit)
 #' new_weights <- predict(fit, newdata = demo$cube, type = "spatial")
 #' }
 #' @export
-predict.spectral_unmix <- function(object,
+predict.spax_nmf <- function(object,
                                    newdata = NULL,
                                    type = c("reconstruction", "spatial", "cube"),
                                    nx = NULL,
@@ -762,8 +766,8 @@ predict.spectral_unmix <- function(object,
                                    smooth_components = NULL,
                                    sparse_components = NULL,
                                    ...) {
-  if (!inherits(object, "spectral_unmix")) {
-    stop("'object' must be a result from spectral_unmix().", call. = FALSE)
+  if (!inherits(object, "spax_nmf")) {
+    stop("'object' must be a result from spax_nmf().", call. = FALSE)
   }
 
   type <- match.arg(type)
@@ -913,7 +917,7 @@ predict.spectral_unmix <- function(object,
 #'
 #' Convenience plots for component spectra, spatial maps, and optimization loss.
 #'
-#' @param x Result from [spectral_unmix()].
+#' @param x Result from [spax_nmf()].
 #' @param type Plot type: \code{"spectra"}, \code{"maps"}, or \code{"loss"}.
 #' @param nx Number of x-axis pixels when plotting maps.
 #' @param ny Number of y-axis pixels when plotting maps.
@@ -925,21 +929,21 @@ predict.spectral_unmix <- function(object,
 #' @examples
 #' \dontrun{
 #' cube <- simulate_ifu_cube(nx = 6, ny = 5, n_wave = 20)
-#' fit <- spectral_unmix(cube$matrix, k = 3, niter = 50)
+#' fit <- spax_nmf(cube$matrix, k = 3, niter = 50)
 #' plot(fit, type = "spectra", wavelength = cube$wavelength)
 #' plot(fit, type = "maps", nx = cube$nx, ny = cube$ny)
 #' plot(fit, type = "loss")
 #' }
 #' @export
-plot.spectral_unmix <- function(x,
+plot.spax_nmf <- function(x,
                                 type = c("spectra", "maps", "loss"),
                                 nx = NULL,
                                 ny = NULL,
                                 components = NULL,
                                 wavelength = NULL,
                                 ...) {
-  if (!inherits(x, "spectral_unmix")) {
-    stop("'x' must be a result from spectral_unmix().", call. = FALSE)
+  if (!inherits(x, "spax_nmf")) {
+    stop("'x' must be a result from spax_nmf().", call. = FALSE)
   }
 
   type <- match.arg(type)
@@ -1023,7 +1027,7 @@ plot.spectral_unmix <- function(x,
 #'
 #' Plots observed and reconstructed spectra for selected spaxels.
 #'
-#' @param fit Result from [spectral_unmix()].
+#' @param fit Result from [spax_nmf()].
 #' @param x Numeric matrix used as input to the fit.
 #' @param pixels Optional vector of spaxel indices to plot.
 #' @param n Number of random spaxels to plot when \code{pixels} is omitted.
@@ -1034,13 +1038,13 @@ plot.spectral_unmix <- function(x,
 #' @examples
 #' \dontrun{
 #' cube <- simulate_ifu_cube(nx = 6, ny = 5, n_wave = 20)
-#' fit <- spectral_unmix(cube$matrix, k = 3, niter = 50)
+#' fit <- spax_nmf(cube$matrix, k = 3, niter = 50)
 #' plot_reconstruction(fit, cube$matrix, n = 4, wavelength = cube$wavelength)
 #' }
 #' @export
 plot_reconstruction <- function(fit, x, pixels = NULL, n = 6, wavelength = NULL, ...) {
-  if (!inherits(fit, "spectral_unmix")) {
-    stop("'fit' must be a result from spectral_unmix().", call. = FALSE)
+  if (!inherits(fit, "spax_nmf")) {
+    stop("'fit' must be a result from spax_nmf().", call. = FALSE)
   }
 
   x <- validate_input_matrix(x)
@@ -1156,11 +1160,14 @@ infer_cube_dims <- function(x) {
 }
 
 extract_cube_metadata <- function(x) {
-  if (inherits(x, "spectral_unmix")) {
+  if (inherits(x, "spax_nmf")) {
     return(x$metadata)
   }
 
-  metadata <- attr(x, "spectral_unmix_metadata", exact = TRUE)
+  metadata <- attr(x, "spax_nmf_metadata", exact = TRUE)
+  if (is.null(metadata)) {
+    metadata <- attr(x, "spectral_unmix_metadata", exact = TRUE)
+  }
   if (!is.null(metadata)) {
     return(metadata)
   }
@@ -1176,7 +1183,10 @@ extract_cube_metadata <- function(x) {
 }
 
 extract_matrix_metadata <- function(x) {
-  metadata <- attr(x, "spectral_unmix_metadata", exact = TRUE)
+  metadata <- attr(x, "spax_nmf_metadata", exact = TRUE)
+  if (is.null(metadata)) {
+    metadata <- attr(x, "spectral_unmix_metadata", exact = TRUE)
+  }
   dims <- attr(x, "spectral_unmix_dim", exact = TRUE)
 
   if (!is.null(dims)) {

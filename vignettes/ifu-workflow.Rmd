@@ -38,7 +38,7 @@ dim(x)
 ## 3. Fit the unmixing model
 
 ```{r, eval = FALSE}
-fit <- spectral_unmix(
+fit <- spax_nmf(
   x,
   k = 3,
   lambda_smooth = 0.02,

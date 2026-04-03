@@ -1,21 +1,21 @@
 \name{basis}
 \alias{basis}
-\alias{basis.spectral_unmix}
-\alias{coef.spectral_unmix}
-\alias{fitted.spectral_unmix}
-\alias{predict.spectral_unmix}
-\alias{residuals.spectral_unmix}
-\alias{summary.spectral_unmix}
-\alias{print.summary.spectral_unmix}
+\alias{basis.spax_nmf}
+\alias{coef.spax_nmf}
+\alias{fitted.spax_nmf}
+\alias{predict.spax_nmf}
+\alias{residuals.spax_nmf}
+\alias{summary.spax_nmf}
+\alias{print.summary.spax_nmf}
 \title{Standard Model Methods for SpaxNMF Fits}
 \usage{
 basis(object, ...)
 
-\method{coef}{spectral_unmix}(object, ...)
+\method{coef}{spax_nmf}(object, ...)
 
-\method{fitted}{spectral_unmix}(object, nx = NULL, ny = NULL, ...)
+\method{fitted}{spax_nmf}(object, nx = NULL, ny = NULL, ...)
 
-\method{predict}{spectral_unmix}(
+\method{predict}{spax_nmf}(
   object,
   newdata = NULL,
   type = c("reconstruction", "spatial", "cube"),
@@ -28,14 +28,14 @@ basis(object, ...)
   ...
 )
 
-\method{residuals}{spectral_unmix}(object, x, nx = NULL, ny = NULL, ...)
+\method{residuals}{spax_nmf}(object, x, nx = NULL, ny = NULL, ...)
 
-\method{summary}{spectral_unmix}(object, ...)
+\method{summary}{spax_nmf}(object, ...)
 
-\method{print}{summary.spectral_unmix}(x, ...)
+\method{print}{summary.spax_nmf}(x, ...)
 }
 \arguments{
-\item{object}{Result from \code{spectral_unmix()}.}
+\item{object}{Result from \code{spax_nmf()}.}
 
 \item{...}{Unused.}
 
@@ -57,7 +57,7 @@ basis(object, ...)
 \item{verbose}{Logical; if \code{TRUE}, emit progress every 100 iterations.}
 
 \item{x}{For \code{residuals()}, the numeric matrix originally used for the
-fit. For \code{print.summary.spectral_unmix()}, the summary object.}
+fit. For \code{print.summary.spax_nmf()}, the summary object.}
 }
 \value{
 \code{basis()} returns a wavelength-by-component matrix.
@@ -72,10 +72,10 @@ or a reconstructed cube.
 
 \code{residuals()} returns residuals as a matrix or cube.
 
-\code{summary()} returns a list with class \code{"summary.spectral_unmix"}.
+\code{summary()} returns a list with class \code{"summary.spax_nmf"}.
 }
 \description{
-Convenience methods that make \code{spectral_unmix()} objects behave more like
+Convenience methods that make \code{spax_nmf()} objects behave more like
 standard decomposition objects from \code{prcomp()} and NMF-style interfaces.
 }
 \examples{
@@ -85,7 +85,7 @@ fake <- list(
   reconstruction = matrix(runif(20), 4, 5),
   loss = c(3, 2, 1)
 )
-class(fake) <- "spectral_unmix"
+class(fake) <- "spax_nmf"
 
 basis(fake)
 coef(fake)

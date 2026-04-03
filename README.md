@@ -34,7 +34,7 @@ library(SpaxNMF)
 
 demo <- simulate_ifu_cube(nx = 16, ny = 16, n_wave = 100)
 
-fit <- spectral_unmix(
+fit <- spax_nmf(
   demo$matrix,
   k = 3,
   lambda_smooth = 0.02,
@@ -92,7 +92,7 @@ Mat <- cube_to_matrix(X)
 Mat[!is.finite(Mat)] <- 0
 Mat <- pmax(Mat, 0)
 
-fit <- spectral_unmix(Mat, k = 5, lr = 0.01, niter = 5000)
+fit <- spax_nmf(Mat, k = 5, lr = 0.01, niter = 5000)
 
 maps <- predict(fit, type = "spatial")
 cube_hat <- predict(

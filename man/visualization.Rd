@@ -1,9 +1,9 @@
-\name{plot.spectral_unmix}
-\alias{plot.spectral_unmix}
+\name{plot.spax_nmf}
+\alias{plot.spax_nmf}
 \alias{plot_reconstruction}
 \title{Visualization Helpers for Spectral Unmixing Results}
 \usage{
-\method{plot}{spectral_unmix}(
+\method{plot}{spax_nmf}(
   x,
   type = c("spectra", "maps", "loss"),
   nx = NULL,
@@ -16,8 +16,8 @@
 plot_reconstruction(fit, x, pixels = NULL, n = 6, wavelength = NULL, ...)
 }
 \arguments{
-\item{x}{For \code{plot.spectral_unmix()}, a result from
-\code{spectral_unmix()}. For \code{plot_reconstruction()}, the numeric matrix
+\item{x}{For \code{plot.spax_nmf()}, a result from
+\code{spax_nmf()}. For \code{plot_reconstruction()}, the numeric matrix
 used as input to the fit.}
 
 \item{type}{Plot type: \code{"spectra"}, \code{"maps"}, or \code{"loss"}.}
@@ -32,7 +32,7 @@ used as input to the fit.}
 
 \item{...}{Additional graphical arguments passed to base plotting functions.}
 
-\item{fit}{Result from \code{spectral_unmix()}.}
+\item{fit}{Result from \code{spax_nmf()}.}
 
 \item{pixels}{Optional vector of spaxel indices to plot.}
 
@@ -48,7 +48,7 @@ curves, and data-versus-reconstruction diagnostics.
 \examples{
 \dontrun{
 demo <- simulate_ifu_cube(nx = 6, ny = 5, n_wave = 20)
-fit <- spectral_unmix(demo$matrix, k = 3, niter = 50)
+fit <- spax_nmf(demo$matrix, k = 3, niter = 50)
 
 plot(fit, type = "spectra", wavelength = demo$wavelength)
 plot(fit, type = "maps", nx = demo$nx, ny = demo$ny)

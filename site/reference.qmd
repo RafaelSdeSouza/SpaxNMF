@@ -4,7 +4,7 @@ title: "Reference"
 
 ## Model fitting
 
-- `spectral_unmix()`
+- `spax_nmf()`
 - `summary()`
 - `print()`
 

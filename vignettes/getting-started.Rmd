@@ -32,7 +32,7 @@ The core function estimates abundance maps and component spectra using a smooth
 non-negative matrix factorization.
 
 ```{r, eval = FALSE}
-fit <- spectral_unmix(demo$matrix, k = 3, niter = 250, lr = 0.03)
+fit <- spax_nmf(demo$matrix, k = 3, niter = 250, lr = 0.03)
 print(fit)
 plot(fit, type = "spectra", wavelength = demo$wavelength)
 plot(fit, type = "loss")
@@ -59,7 +59,7 @@ PCA, vanilla NMF, and spatial NMF.
 
 1. Read or simulate an IFU cube.
 2. Convert it with `cube_to_matrix()`.
-3. Fit `spectral_unmix()`.
+3. Fit `spax_nmf()`.
 4. Plot component spectra and abundance maps.
 5. Compare the recovered structures with baseline decompositions such as PCA
    and classical NMF.

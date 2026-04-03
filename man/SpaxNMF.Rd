@@ -13,7 +13,7 @@ The package is designed around a simple workflow:
 \enumerate{
 \item simulate or ingest a spectral cube;
 \item reshape it with \code{cube_to_matrix()};
-\item fit a low-rank unmixing model with \code{spectral_unmix()};
+\item fit a low-rank unmixing model with \code{spax_nmf()};
 \item inspect component spectra and abundance maps.
 }
 }

@@ -27,7 +27,7 @@ and `S` contains component spectra.
 flowchart LR
   A["IFU cube<br/>nx × ny × nλ"] --> B["cube_to_matrix()"]
   B --> C["spaxel × wavelength matrix X"]
-  C --> D["spectral_unmix()"]
+  C --> D["spax_nmf()"]
   D --> E["A: abundance maps"]
   D --> F["S: component spectra"]
   D --> G["AS: reconstruction"]
@@ -51,7 +51,7 @@ synthetic example used throughout the documentation.
 
 ## Main functions
 
-- `spectral_unmix()` fits the model.
+- `spax_nmf()` fits the model.
 - `cube_to_matrix()` and `matrix_to_cube()` reshape IFU cubes.
 - `basis()` and `coef()` provide NMF-style accessors.
 - `fitted()`, `predict()`, and `residuals()` provide standard model methods.

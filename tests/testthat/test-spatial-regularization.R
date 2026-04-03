@@ -1,11 +1,11 @@
-if (!exists("spectral_unmix", mode = "function")) {
+if (!exists("spax_nmf", mode = "function")) {
   candidate_paths <- c(
-    file.path(getwd(), "R", "spectral_unmix.R"),
-    file.path(getwd(), "..", "..", "R", "spectral_unmix.R")
+    file.path(getwd(), "R", "spax_nmf.R"),
+    file.path(getwd(), "..", "..", "R", "spax_nmf.R")
   )
   source_path <- candidate_paths[file.exists(candidate_paths)][1]
   if (is.na(source_path)) {
-    stop("Could not locate R/spectral_unmix.R for source-based tests.", call. = FALSE)
+    stop("Could not locate R/spax_nmf.R for source-based tests.", call. = FALSE)
   }
   sys.source(source_path, envir = environment())
 }
@@ -228,7 +228,7 @@ test_that("lambda_spatial = 0 reduces to the original smooth torch NMF objective
   demo <- simulate_realistic_ifu_cube(nx = 7, ny = 6, n_wave = 40, noise = 0.01)
 
   set_all_seeds(11)
-  fit_plain <- spectral_unmix(
+  fit_plain <- spax_nmf(
     demo$matrix,
     k = 3,
     lambda_smooth = 0.02,
@@ -237,7 +237,7 @@ test_that("lambda_spatial = 0 reduces to the original smooth torch NMF objective
   )
 
   set_all_seeds(11)
-  fit_spatial_zero <- spectral_unmix(
+  fit_spatial_zero <- spax_nmf(
     demo$matrix,
     k = 3,
     lambda_smooth = 0.02,
@@ -261,7 +261,7 @@ test_that("spatial regularization improves smooth-map recovery on smooth synthet
   demo <- simulate_realistic_ifu_cube(nx = 10, ny = 10, n_wave = 60, noise = 0.03)
 
   set_all_seeds(23)
-  fit_vanilla <- spectral_unmix(
+  fit_vanilla <- spax_nmf(
     demo$matrix,
     k = 3,
     lambda_smooth = 0.01,
@@ -271,7 +271,7 @@ test_that("spatial regularization improves smooth-map recovery on smooth synthet
   )
 
   set_all_seeds(23)
-  fit_spatial <- spectral_unmix(
+  fit_spatial <- spax_nmf(
     demo$matrix,
     k = 3,
     lambda_smooth = 0.01,
@@ -300,7 +300,7 @@ test_that("sparse component priors improve compact-source recovery", {
   demo <- simulate_compact_ifu_cube()
 
   set_all_seeds(101)
-  fit_all_smooth <- spectral_unmix(
+  fit_all_smooth <- spax_nmf(
     demo$matrix,
     k = 3,
     lambda_smooth = 0.01,
@@ -312,7 +312,7 @@ test_that("sparse component priors improve compact-source recovery", {
   )
 
   set_all_seeds(101)
-  fit_mixed <- spectral_unmix(
+  fit_mixed <- spax_nmf(
     demo$matrix,
     k = 3,
     lambda_smooth = 0.01,

@@ -1,4 +1,4 @@
-source("R/spectral_unmix.R")
+source("R/spax_nmf.R")
 
 dir.create("site/images", recursive = TRUE, showWarnings = FALSE)
 
@@ -113,7 +113,7 @@ fit_best_model <- function(x, seeds, ...) {
 
   for (seed in seeds) {
     set_all_seeds(seed)
-    fit <- spectral_unmix(x, ...)
+    fit <- spax_nmf(x, ...)
     mse <- mean((x - fit$reconstruction)^2)
     if (mse < best_mse) {
       best_fit <- fit

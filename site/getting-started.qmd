@@ -10,7 +10,7 @@ library(SpaxNMF)
 
 ```{r, eval = FALSE}
 demo <- simulate_ifu_cube(nx = 16, ny = 16, n_wave = 100)
-fit <- spectral_unmix(
+fit <- spax_nmf(
   demo$matrix,
   k = 3,
   lambda_smooth = 0.02,

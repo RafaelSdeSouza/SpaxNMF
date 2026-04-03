@@ -1,9 +1,9 @@
-\name{spectral_unmix}
-\alias{spectral_unmix}
-\alias{print.spectral_unmix}
+\name{spax_nmf}
+\alias{spax_nmf}
+\alias{print.spax_nmf}
 \title{Regularized NMF for IFU Data}
 \usage{
-spectral_unmix(
+spax_nmf(
   x,
   k = 3,
   lambda_smooth = 0.01,
@@ -16,7 +16,7 @@ spectral_unmix(
   metadata = NULL
 )
 
-\method{print}{spectral_unmix}(x, ...)
+\method{print}{spax_nmf}(x, ...)
 }
 \arguments{
 \item{x}{Numeric matrix-like object with spectra in rows and wavelength
@@ -46,7 +46,7 @@ reconstructed cubes, and prediction outputs.}
 \item{...}{Unused.}
 }
 \value{
-A list with class \code{"spectral_unmix"} containing:
+A list with class \code{"spax_nmf"} containing:
 \itemize{
 \item \code{spatial}: abundance matrix with one column per component.
 \item \code{abundance}: alias of \code{spatial}.
@@ -90,7 +90,7 @@ non-negative matrix factorization. \emph{Nature}, 401, 788-791.
 \examples{
 cube <- simulate_ifu_cube(nx = 12, ny = 12, n_wave = 80)
 \dontrun{
-fit <- spectral_unmix(cube$matrix, k = 3, niter = 150, lr = 0.03)
+fit <- spax_nmf(cube$matrix, k = 3, niter = 150, lr = 0.03)
 print(fit)
 component_map(fit, nx = cube$nx, ny = cube$ny, component = 1)
 }
