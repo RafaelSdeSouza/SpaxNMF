@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Model – SpaxNMF</title>
+<title>Toy Benchmark – SpaxNMF</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -70,35 +70,6 @@ ul.task-list li input[type="checkbox"] {
 }</script>
 <style>html{ scroll-behavior: smooth; }</style>
 
-  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
-
-<script type="text/javascript">
-const typesetMath = (el) => {
-  if (window.MathJax) {
-    // MathJax Typeset
-    window.MathJax.typeset([el]);
-  } else if (window.katex) {
-    // KaTeX Render
-    var mathElements = el.getElementsByClassName("math");
-    var macros = [];
-    for (var i = 0; i < mathElements.length; i++) {
-      var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
-        window.katex.render(texText.data, mathElements[i], {
-          displayMode: mathElements[i].classList.contains('display'),
-          throwOnError: false,
-          macros: macros,
-          fleqn: false
-        });
-      }
-    }
-  }
-}
-window.Quarto = {
-  typesetMath
-};
-</script>
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -125,11 +96,11 @@ window.Quarto = {
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link active" href="./model.html" aria-current="page"> 
+    <a class="nav-link" href="./model.html"> 
 <span class="menu-text">Model</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./toy-benchmark.html"> 
+    <a class="nav-link active" href="./toy-benchmark.html" aria-current="page"> 
 <span class="menu-text">Toy Benchmark</span></a>
   </li>  
   <li class="nav-item">
@@ -171,12 +142,10 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
-  <li><a href="#objective-function" id="toc-objective-function" class="nav-link" data-scroll-target="#objective-function">Objective Function</a></li>
-  <li><a href="#why-the-spatial-term-matters" id="toc-why-the-spatial-term-matters" class="nav-link" data-scroll-target="#why-the-spatial-term-matters">Why The Spatial Term Matters</a></li>
-  <li><a href="#compact-source-components" id="toc-compact-source-components" class="nav-link" data-scroll-target="#compact-source-components">Compact-Source Components</a></li>
-  <li><a href="#optimization" id="toc-optimization" class="nav-link" data-scroll-target="#optimization">Optimization</a></li>
-  <li><a href="#sanity-checks" id="toc-sanity-checks" class="nav-link" data-scroll-target="#sanity-checks">Sanity Checks</a></li>
+  <li><a href="#controlled-sanity-check" id="toc-controlled-sanity-check" class="nav-link active" data-scroll-target="#controlled-sanity-check">Controlled Sanity Check</a></li>
+  <li><a href="#current-figure" id="toc-current-figure" class="nav-link" data-scroll-target="#current-figure">Current Figure</a></li>
+  <li><a href="#summary-metrics" id="toc-summary-metrics" class="nav-link" data-scroll-target="#summary-metrics">Summary Metrics</a></li>
+  <li><a href="#interpretation" id="toc-interpretation" class="nav-link" data-scroll-target="#interpretation">Interpretation</a></li>
   </ul>
 </nav>
     </div>
@@ -185,7 +154,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Model</h1>
+<h1 class="title">Toy Benchmark</h1>
 </div>
 
 
@@ -202,101 +171,69 @@ window.Quarto = {
 </header>
 
 
-<section id="overview" class="level2">
-<h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<p>SpaxNMF represents an IFU cube as a matrix (X _{}^{n p}), with one row per spaxel and one column per wavelength channel. The model seeks a low-rank non-negative factorization</p>
-<p><span class="math display">\[
-X \approx AS
-\]</span></p>
-<p>where:</p>
-<ul>
-<li>(A _{}^{n k}) contains component weights for each spaxel</li>
-<li>(S _{}^{k p}) contains the component spectra</li>
-<li>(k) is the chosen factorization rank</li>
-</ul>
-<p><code>A</code> should be interpreted simply as a set of component-weight maps over the field.</p>
+<section id="controlled-sanity-check" class="level2">
+<h2 class="anchored" data-anchor-id="controlled-sanity-check">Controlled Sanity Check</h2>
+<p>This page isolates the base matrix factorization problem from the full IFU stress tests. The toy data are constructed to be exactly low-rank, with non-negative component spectra and non-negative spatial weights. Spatial and sparsity penalties are turned off for <code>spax_nmf()</code>, so this comparison checks the standalone vanilla NMF fit directly against <code>NMF::nmf()</code>. Under these conditions <code>spax_nmf()</code> still uses the torch-based Adam optimizer, with all regularization weights set to zero, so the comparison checks the actual package implementation against a standard <code>NMF::nmf()</code> reference.</p>
+<div class="benchmark-note">
+<p>If this toy benchmark behaves well while the real-cube benchmark does not, the core vanilla NMF machinery is likely fine and the remaining difficulty lies in the astrophysical data model rather than in the factorization code itself.</p>
+</div>
 </section>
-<section id="objective-function" class="level2">
-<h2 class="anchored" data-anchor-id="objective-function">Objective Function</h2>
-<p>The current implementation minimizes</p>
-<p><span class="math display">\[
-\mathcal{L}(A,S)=
-\|X-AS\|_F^2
-+\lambda_S \|DS\|_F^2
-+\sum_c \lambda_{A,c}\sum_{i,j} w_{ij}(A_{ic}-A_{jc})^2
-+\sum_c \lambda_{C,c}\|A_{:,c}\|_1
-\]</span></p>
-<p>with Gaussian spatial couplings</p>
-<p><span class="math display">\[
-w_{ij} = \exp\left(-\frac{d_{ij}^2}{2\sigma^2}\right).
-\]</span></p>
-<div class="feature-grid">
-<div class="feature-card">
-<h3 class="anchored">
-Reconstruction term
-</h3>
-<p>
-(|X-AS|_F^2) matches the model to the observed spectra.
-</p>
+<section id="current-figure" class="level2">
+<h2 class="anchored" data-anchor-id="current-figure">Current Figure</h2>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="images/toy-nmf-benchmark.png" class="img-fluid figure-img" width="2240"></p>
+</figure>
 </div>
-<div class="feature-card">
-<h3 class="anchored">
-Spectral smoothness
-</h3>
-<p>
-(_S |DS|_F^2) penalizes channel-to-channel roughness in the recovered component spectra.
-</p>
-</div>
-<div class="feature-card">
-<h3 class="anchored">
-Spatial coherence
-</h3>
-<p>
-(_{A,c}) controls how strongly nearby spaxels are encouraged to carry similar weights for component (c).
-</p>
 </div>
 </div>
 </section>
-<section id="why-the-spatial-term-matters" class="level2">
-<h2 class="anchored" data-anchor-id="why-the-spatial-term-matters">Why The Spatial Term Matters</h2>
-<p>The spatial regularization does not smooth the spectra directly. It acts on the component weights in (A):</p>
-<p><span class="math display">\[
-\sum_{i,j} w_{ij}(A_{ic}-A_{jc})^2
-\]</span></p>
-<p>for each selected component (c). In practice this:</p>
+<section id="summary-metrics" class="level2">
+<h2 class="anchored" data-anchor-id="summary-metrics">Summary Metrics</h2>
+<div class="cell">
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Current toy benchmark summary.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">method</th>
+<th style="text-align: left;">solver</th>
+<th style="text-align: right;">reconstruction_mse</th>
+<th style="text-align: right;">spectra_mse</th>
+<th style="text-align: right;">map_mse</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">SpaxNMF</td>
+<td style="text-align: left;">adam</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.03539</td>
+<td style="text-align: right;">0.03700</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">NMF package</td>
+<td style="text-align: left;">lee</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.02426</td>
+<td style="text-align: right;">0.04163</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>All three metrics are lower-is-better:</p>
 <ul>
-<li>suppresses salt-and-pepper weight maps</li>
-<li>stabilizes the decomposition under noise</li>
-<li>encourages extended components to remain spatially coherent</li>
-<li>leaves distant spaxels free to differ because the kernel weight decays with distance</li>
+<li><code>reconstruction_mse</code>: data-minus-model error over the whole toy matrix</li>
+<li><code>spectra_mse</code>: component-spectrum mismatch after matching fitted components to truth</li>
+<li><code>map_mse</code>: component-weight map mismatch after the same matching step</li>
 </ul>
 </section>
-<section id="compact-source-components" class="level2">
-<h2 class="anchored" data-anchor-id="compact-source-components">Compact-Source Components</h2>
-<p>Selected components can also receive a sparsity prior</p>
-<p><span class="math display">\[
-\|A_{:,c}\|_1
-\]</span></p>
-<p>which is useful when a component is expected to be compact rather than smooth. This is the mechanism currently used to test GC-like components against a smooth galaxy/background decomposition.</p>
-</section>
-<section id="optimization" class="level2">
-<h2 class="anchored" data-anchor-id="optimization">Optimization</h2>
-<p>The torch implementation follows a simple projected-gradient strategy:</p>
-<ol type="1">
-<li>Initialize (A) and (S) randomly with positive entries.</li>
-<li>Optimize the loss with Adam.</li>
-<li>Clamp (A) and (S) to remain non-negative after each step.</li>
-<li>Return spectra, component weights, and the reconstruction (AS).</li>
-</ol>
-</section>
-<section id="sanity-checks" class="level2">
-<h2 class="anchored" data-anchor-id="sanity-checks">Sanity Checks</h2>
-<p>The current tests enforce two baseline conditions:</p>
-<ul>
-<li>setting <code>lambda_spatial = 0</code> recovers the original smooth NMF objective</li>
-<li>adding sparse priors improves recovery of compact-source components on a synthetic IFU mock</li>
-</ul>
-<p>See <a href="./getting-started.html">Getting Started</a> for code examples and <a href="./benchmark.html">Benchmark</a> for the current real-cube test.</p>
+<section id="interpretation" class="level2">
+<h2 class="anchored" data-anchor-id="interpretation">Interpretation</h2>
+<p>This toy benchmark should be read as a sanity check, not as a realistic IFU science case. The expected outcome is that both <code>spax_nmf()</code> and <code>NMF::nmf()</code> recover the low-rank structure well. If they do, then poor behavior on the real benchmark should be attributed to the harder galaxy+sky+ compact-source problem rather than to a basic failure of standalone NMF.</p>
 
 
 </section>

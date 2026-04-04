@@ -8,8 +8,11 @@ spax_nmf(
   x,
   k = 3,
   lambda_smooth = 0.01,
+  solver = c("adam", "auto", "lee"),
   lr = 0.02,
   niter = 2000,
+  tol = 1e-06,
+  patience = 20,
   center = FALSE,
   scale = FALSE,
   cuda = FALSE,
@@ -33,9 +36,19 @@ channels in columns.}
 \item{lambda_smooth}{Non-negative weight for the first-difference smoothness
 penalty applied to the recovered spectra.}
 
+\item{solver}{Optimization backend. \code{"adam"} is the default package
+path and always uses the torch optimizer. \code{"auto"} and
+\code{"lee"} are available for diagnostic comparisons against standard
+vanilla NMF solvers when all penalties are disabled.}
+
 \item{lr}{Learning rate passed to \code{torch::optim_adam()}.}
 
 \item{niter}{Number of optimization iterations.}
+
+\item{tol}{Relative objective-improvement tolerance used for early stopping.}
+
+\item{patience}{Number of consecutive iterations with improvement below
+\code{tol} before optimization stops early.}
 
 \item{center}{Logical; if \code{TRUE}, center wavelength channels before
 fitting.}
@@ -83,6 +96,10 @@ A list with class \code{"spax_nmf"} containing:
   \item \code{reconstruction}: reconstructed matrix \eqn{AS}.
   \item \code{fitted}: alias of \code{reconstruction}.
   \item \code{loss}: objective history over the optimization.
+  \item \code{solver}: optimization backend used for the fit.
+  \item \code{niter_run}: number of iterations actually executed.
+  \item \code{converged}: logical flag indicating whether early-stopping
+    convergence was detected before \code{niter}.
   \item \code{metadata}: optional metadata carried from the input matrix or
     provided explicitly.
   \item \code{center}: centering values used during preprocessing, or
@@ -112,7 +129,9 @@ where the second term penalizes rapid channel-to-channel variations in each
 component spectrum, the third penalizes sharp changes between nearby spatial
 pixels using Gaussian kernel weights \eqn{w_{ij}} when \code{nx} and
 \code{ny} are available, and the fourth promotes compact sparse spatial
-components when desired.
+components when desired. The regular package workflow uses the torch-based
+Adam optimizer, while \code{"lee"} is retained only as a diagnostic
+reference for plain vanilla Frobenius-loss NMF.
 
 For the current package workflow, a typical sequence is:
 \enumerate{

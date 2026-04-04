@@ -173,6 +173,22 @@ display_component_shape <- function(x, max_k = 17L, q_low = 0.05, q_high = 0.95)
   pmin(x / s, 1.15)
 }
 
+asinh_stretch <- function(x, scale = NULL) {
+  x <- pmax(as.numeric(x), 0)
+  if (is.null(scale)) {
+    scale <- stats::quantile(x[x > 0], probs = 0.9, na.rm = TRUE, names = FALSE)
+  }
+  if (!is.finite(scale) || scale <= 0) {
+    scale <- max(x, na.rm = TRUE)
+  }
+  if (!is.finite(scale) || scale <= 0) {
+    return(rep(0, length(x)))
+  }
+
+  stretched <- asinh(x / scale)
+  stretched / max(stretched, na.rm = TRUE)
+}
+
 display_smooth <- function(x, max_k = 11L) {
   x <- as.numeric(x)
   if (length(x) < 3L) {
@@ -722,7 +738,7 @@ focus_idx <- if (length(sparse_idx)) {
 }
 focus_components <- component_names[focus_idx]
 focus_labels <- setNames(
-  paste0(focus_components, " (compact candidate)"),
+  paste0(focus_components, " (sparse component)"),
   focus_components
 )
 focus_panel_levels <- unname(focus_labels)
@@ -796,24 +812,6 @@ candidate_peak_meta <- bind_rows(lapply(focus_idx, function(i) {
     peak_label = sprintf("Peak (%d, %d)", peak_x, peak_y)
   )
 
-candidate_peak_df <- bind_rows(lapply(seq_len(nrow(candidate_peak_meta)), function(i) {
-  tibble(
-    wavelength = real_cube$wavelength,
-    value = display_component_shape(unlist(candidate_peak_meta$spectrum[[i]]), max_k = 17L),
-    model = candidate_peak_meta$model[i],
-    component = candidate_peak_meta$component[i],
-    panel_label = candidate_peak_meta$panel_label[i],
-    peak_label = candidate_peak_meta$peak_label[i]
-  )
-}))
-
-candidate_peak_annot <- candidate_peak_meta |>
-  mutate(
-    x = max(real_cube$wavelength) - 0.03 * diff(range(real_cube$wavelength)),
-    y = c(1.03, 0.91)[as.integer(model)],
-    label = peak_label
-  )
-
 example_spaxels <- unique(c(
   which.max(as.vector(real_cube$flux_map)),
   candidate_peak_meta$peak_idx[candidate_peak_meta$model == "Spatial NMF"]
@@ -826,7 +824,7 @@ example_df <- bind_rows(lapply(seq_along(example_spaxels), function(ii) {
   label <- if (ii == 1L) {
     sprintf("Galaxy peak (%d, %d)", coord[1], coord[2])
   } else {
-    sprintf("Candidate peak (%d, %d)", coord[1], coord[2])
+    sprintf("Sparse-model peak (%d, %d)", coord[1], coord[2])
   }
   tibble(
     wavelength = real_cube$wavelength,
@@ -864,6 +862,16 @@ model_pal <- c(
 
 map_pal <- c("#FFF7BC", "#FEC44F", "#FD8D3C", "#E6550D", "#A63603")
 
+white_light_df <- expand.grid(ix = seq_len(real_cube$nx), iy = seq_len(real_cube$ny)) |>
+  mutate(value = asinh_stretch(as.vector(real_cube$flux_map)))
+
+peak_overlay_df <- candidate_peak_meta |>
+  mutate(
+    label = paste0(ifelse(model == "Vanilla NMF", "V:", "S:"), gsub("Component ", "C", as.character(component))),
+    label_x = peak_x + ifelse(model == "Vanilla NMF", 16, -16),
+    label_y = peak_y + ifelse(model == "Vanilla NMF", 12, -12)
+  )
+
 p_examples <- ggplot(example_df, aes(wavelength, value, color = model)) +
   geom_line(linewidth = 0.95) +
   facet_wrap(~ spaxel, nrow = 1, scales = "free_y") +
@@ -889,135 +897,52 @@ p_examples <- ggplot(example_df, aes(wavelength, value, color = model)) +
   base_panel_theme +
   theme(legend.position = "top")
 
-p_sky <- NULL
-if (!is.null(real_cube$sky)) {
-  sky_df <- tibble(
-    wavelength = real_cube$wavelength,
-    template = display_positive(real_cube$sky$template),
-    continuum = display_positive(real_cube$sky$continuum),
-    sky_lines = display_positive(real_cube$sky$line_template)
-  ) |>
-    pivot_longer(
-      cols = c("template", "continuum", "sky_lines"),
-      names_to = "series",
-      values_to = "value"
-    )
-
-  sky_map_df <- expand.grid(ix = seq_len(real_cube$nx), iy = seq_len(real_cube$ny)) |>
-    mutate(
-      value = as.vector(real_cube$sky$fraction_map),
-      selected = as.vector(real_cube$sky$selected_mask)
-    )
-
-  p_sky_spec <- ggplot(sky_df, aes(wavelength, value, color = series)) +
-    geom_line(linewidth = 0.95) +
-    scale_color_manual(
-      values = c(
-        "template" = "#111111",
-        "continuum" = "#F59E0B",
-        "sky_lines" = "#0F766E"
-      ),
-      labels = c("Outer-spaxel median", "Smooth continuum", "Sky-line template")
-    ) +
-    scale_x_continuous(
-      breaks = c(4000, 5000, 6000, 7000, 8000),
-      expand = expansion(mult = c(0, 0))
-    ) +
-    labs(
-      title = "Estimated sky template from faint outer spaxels",
-      subtitle = sprintf(
-        "selected spaxels = %d | line channels = %d | mode = %s",
-        length(real_cube$sky$selected_idx),
-        sum(real_cube$sky$line_mask),
-        real_cube$sky$fit_mode
-      ),
-      x = expression(lambda ~ "[" * A * "]"),
-      y = "Norm. flux",
-      color = NULL
-    ) +
-    theme_minimal(base_size = 13) +
-    base_panel_theme +
-    theme(legend.position = "top")
-
-  p_sky_map <- ggplot(sky_map_df, aes(ix, iy, fill = value)) +
-    geom_tile() +
-    geom_point(
-      data = subset(sky_map_df, selected),
-      aes(ix, iy),
-      inherit.aes = FALSE,
-      color = "#111111",
-      alpha = 0.18,
-      size = 0.12
-    ) +
-    scale_fill_gradientn(colors = map_pal, guide = "none") +
-    coord_equal() +
-    labs(
-      title = "Estimated sky weight map",
-      subtitle = "Points mark the faint outer spaxels used to build the template",
-      x = NULL,
-      y = NULL
-    ) +
-    theme_minimal(base_size = 13) +
-    theme(
-      panel.grid = element_blank(),
-      panel.border = element_rect(color = "grey84", fill = NA, linewidth = 0.7),
-      axis.text = element_blank(),
-      axis.ticks = element_blank(),
-      plot.title = element_text(face = "bold", size = 16),
-      plot.margin = margin(6, 6, 6, 6)
-    )
-
-  p_sky <- p_sky_spec | p_sky_map
-}
-
-p_spectra <- ggplot(
-  candidate_peak_df,
-  aes(wavelength, value, color = model)
+p_whitelight <- ggplot(
+  white_light_df,
+  aes(ix, iy, fill = value)
 ) +
-  geom_line(linewidth = 1.15) +
-  geom_text(
-    data = focus_annotation,
-    aes(x = x, y = y, label = label, color = model),
+  geom_tile() +
+  geom_point(
+    data = peak_overlay_df,
+    aes(peak_x, peak_y, color = model),
     inherit.aes = FALSE,
-    hjust = 1,
-    vjust = 1,
-    size = 3.2,
-    fontface = "bold",
-    show.legend = FALSE
+    shape = 4,
+    stroke = 1.0,
+    size = 3.0,
+    show.legend = TRUE
   ) +
-  geom_text(
-    data = candidate_peak_annot,
-    aes(x = x, y = y, label = label, color = model),
+  geom_label(
+    data = peak_overlay_df,
+    aes(label_x, label_y, label = label, color = model),
     inherit.aes = FALSE,
-    hjust = 1,
-    vjust = 1,
+    fill = scales::alpha("#0B1625", 0.72),
+    label.size = 0,
     size = 3.0,
     show.legend = FALSE
   ) +
-  facet_wrap(~ panel_label, nrow = 1) +
+  scale_fill_gradientn(colors = c("#05060A", "#162334", "#496A8E", "#D0C07B", "#FFF8CF"), guide = "none") +
   scale_color_manual(values = model_pal[c("Vanilla NMF", "Spatial NMF")]) +
-  scale_x_continuous(
-    breaks = c(4000, 5000, 6000, 7000, 8000),
-    expand = expansion(mult = c(0, 0))
-  ) +
-  scale_y_continuous(
-    limits = c(0, 1.05),
-    labels = number_format(accuracy = 0.1),
-    expand = expansion(mult = c(0, 0.02))
-  ) +
+  coord_equal() +
   labs(
-    title = "Local peak-aperture spectra at compact candidates",
+    title = "Asinh white-light image with model-selected sparse-component peaks",
     subtitle = sprintf(
-      "Each curve is the median spectrum in a small aperture around the candidate peak after subtracting a local annulus background. %s",
+      "Orange labels show vanilla-NMF peaks; teal labels show spatial-NMF peaks. %s",
       focus_summary
     ),
-    x = expression(lambda ~ "[" * A * "]"),
-    y = "Norm. flux",
+    x = NULL,
+    y = NULL,
     color = NULL
   ) +
   theme_minimal(base_size = 13) +
-  base_panel_theme +
-  theme(legend.position = "top")
+  theme(
+    panel.grid = element_blank(),
+    panel.border = element_rect(color = "grey84", fill = NA, linewidth = 0.7),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    plot.title = element_text(face = "bold", size = 16),
+    legend.position = "top",
+    plot.margin = margin(6, 6, 6, 6)
+  )
 
 p_maps <- ggplot(
   subset(maps_df, component %in% focus_components) |>
@@ -1038,7 +963,7 @@ p_maps <- ggplot(
   scale_fill_gradientn(colors = map_pal, limits = c(0, 1), guide = "none") +
   coord_equal() +
   labs(
-    title = "Candidate compact-component maps",
+    title = "Sparse-component maps",
     subtitle = sprintf(
       "%s | %s",
       basename(real_cube$path),
@@ -1088,8 +1013,8 @@ p_resid <- ggplot(residual_df, aes(ix, iy, fill = value)) +
     plot.margin = margin(6, 6, 6, 6)
   )
 
-fig <- p_examples / p_spectra / p_maps / p_resid +
-  plot_layout(heights = c(0.95, 1.0, 1.3, 0.75))
+fig <- p_whitelight / p_examples / p_maps / p_resid +
+  plot_layout(heights = c(1.0, 0.95, 1.3, 0.75))
 
 fig <- fig +
   plot_annotation(

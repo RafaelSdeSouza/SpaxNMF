@@ -235,9 +235,9 @@ diagnostics.</p>
 </div>
 
 <div class="info-panel">
-<h3>Benchmark on real targets</h3>
-<p>The benchmark page shows how the current model behaves on a mixed
-galaxy+GC+sky cube under matched preprocessing.</p>
+<h3>Benchmark on toy and real targets</h3>
+<p>The website includes a controlled toy sanity check for standalone NMF and a
+real mixed galaxy+GC+sky benchmark under matched preprocessing.</p>
 </div>
 </div>
 

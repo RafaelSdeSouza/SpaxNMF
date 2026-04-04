@@ -2,26 +2,30 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://rafaelsdesouza.github.io/SpaxNMF/benchmark.html</loc>
-    <lastmod>2026-04-03T21:26:24.440Z</lastmod>
+    <lastmod>2026-04-04T01:33:52.816Z</lastmod>
   </url>
   <url>
-    <loc>https://rafaelsdesouza.github.io/SpaxNMF/getting-started.html</loc>
-    <lastmod>2026-04-03T20:31:30.761Z</lastmod>
-  </url>
-  <url>
-    <loc>https://rafaelsdesouza.github.io/SpaxNMF/reference.html</loc>
+    <loc>https://rafaelsdesouza.github.io/SpaxNMF/ifu-workflow.html</loc>
     <lastmod>2026-04-03T20:25:20.509Z</lastmod>
+  </url>
+  <url>
+    <loc>https://rafaelsdesouza.github.io/SpaxNMF/index.html</loc>
+    <lastmod>2026-04-04T11:56:53.296Z</lastmod>
   </url>
   <url>
     <loc>https://rafaelsdesouza.github.io/SpaxNMF/model.html</loc>
     <lastmod>2026-04-03T21:15:19.170Z</lastmod>
   </url>
   <url>
-    <loc>https://rafaelsdesouza.github.io/SpaxNMF/index.html</loc>
-    <lastmod>2026-04-03T21:26:17.836Z</lastmod>
+    <loc>https://rafaelsdesouza.github.io/SpaxNMF/reference.html</loc>
+    <lastmod>2026-04-03T20:25:20.509Z</lastmod>
   </url>
   <url>
-    <loc>https://rafaelsdesouza.github.io/SpaxNMF/ifu-workflow.html</loc>
-    <lastmod>2026-04-03T20:25:20.509Z</lastmod>
+    <loc>https://rafaelsdesouza.github.io/SpaxNMF/getting-started.html</loc>
+    <lastmod>2026-04-03T20:31:30.761Z</lastmod>
+  </url>
+  <url>
+    <loc>https://rafaelsdesouza.github.io/SpaxNMF/toy-benchmark.html</loc>
+    <lastmod>2026-04-04T12:28:25.446Z</lastmod>
   </url>
 </urlset>

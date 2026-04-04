@@ -12,6 +12,8 @@ website:
         text: Home
       - href: model.qmd
         text: Model
+      - href: toy-benchmark.qmd
+        text: Toy Benchmark
       - href: benchmark.qmd
         text: Benchmark
       - href: getting-started.qmd

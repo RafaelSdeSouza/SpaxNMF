@@ -25,8 +25,9 @@ extended components, and sparse priors for the designated compact components.
 
 ## Current Figure
 
-The saved figure emphasizes the candidate compact components, their
-component-weight maps, and a residual-energy comparison at fixed rank.
+The saved figure emphasizes where the model-selected sparse-component peaks land
+on an asinh-stretched white-light image, how the corresponding sparse-component
+maps look, and how the reconstruction compares at those peak locations.
 
 ```{r}
 if (file.exists("images/ngc1512-benchmark.png")) {
@@ -62,8 +63,8 @@ concentrated maps. For the designated sparse components, the
 ## How To Read The Figure
 
 - The reconstruction panel checks whether the mixed prior preserves acceptable spaxel-level fits.
-- The compact-component spectra panel is diagnostic only: on this mixed cube the recovered basis spectra are still not clean astrophysical templates, so the main comparison is relative rather than interpretive.
-- The compact-component maps panel is the main spatial diagnostic for whether the sparse prior is isolating localized structure.
+- The white-light panel is the key visual check: if the model is isolating GC-like sources, the sparse-component peaks should land on visually compact knots in the asinh image.
+- The sparse-component maps panel is the main spatial diagnostic for whether the sparse prior is isolating localized structure.
 - The residual-energy panel is secondary: PCA is expected to win on pure rank-\(k\) squared-error reconstruction.
 
 ```{r}
@@ -82,6 +83,12 @@ if (!is.null(bench)) {
 }
 ```
 
+Even in the saved run above, the sparse components should be read cautiously:
+the current model improves concentration metrics relative to vanilla NMF, but
+the candidate peaks still collapse onto the bright central galaxy light rather
+than separating visually distinct GC-like sources. At this stage the benchmark
+is a useful failure case, not a polished detection result.
+
 ## Recommended Settings
 
 The current benchmark run uses:
@@ -98,4 +105,6 @@ PCA remains the strongest baseline for pure rank-\(k\) squared-error
 reconstruction, so the main question is not whether NMF beats PCA on MSE alone.
 The relevant question is whether spatial NMF preserves acceptable
 reconstruction quality while yielding cleaner and more interpretable
-component-weight maps.
+component-weight maps. On the current NGC1512 run, the answer is only partial:
+the mixed prior improves concentration and reconstruction relative to vanilla
+NMF, but it does not yet produce a convincing GC-isolation result.

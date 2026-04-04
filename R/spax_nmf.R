@@ -25,8 +25,15 @@
 #'   spatial smoothness prior when \code{lambda_spatial} is scalar.
 #' @param sparse_components Optional component indices that should receive the
 #'   sparsity prior when \code{lambda_sparse} is scalar.
+#' @param solver Optimization backend. \code{"adam"} is the default package
+#'   path and always uses the torch optimizer. \code{"auto"} and
+#'   \code{"lee"} are available for diagnostic comparisons against standard
+#'   vanilla NMF solvers when all penalties are disabled.
 #' @param lr Learning rate passed to \code{torch::optim_adam()}.
 #' @param niter Number of optimization iterations.
+#' @param tol Relative objective-improvement tolerance used for early stopping.
+#' @param patience Number of consecutive iterations with improvement below
+#'   \code{tol} before optimization stops early.
 #' @param nx Optional number of x-axis pixels. Required for spatial smoothing
 #'   when it cannot be inferred from \code{x}.
 #' @param ny Optional number of y-axis pixels. Required for spatial smoothing
@@ -50,6 +57,10 @@
 #'   \item \code{reconstruction}: reconstructed matrix \eqn{AS}.
 #'   \item \code{fitted}: alias of \code{reconstruction}.
 #'   \item \code{loss}: objective history over the optimization.
+#'   \item \code{solver}: optimization backend used for the fit.
+#'   \item \code{niter_run}: number of iterations actually executed.
+#'   \item \code{converged}: logical flag indicating whether early-stopping
+#'     convergence was detected before \code{niter}.
 #'   \item \code{metadata}: optional metadata carried from the input matrix or
 #'     provided explicitly.
 #'   \item \code{center}: centering values used during preprocessing, or
@@ -68,7 +79,9 @@
 #' component spectrum, the third penalizes sharp changes between nearby spatial
 #' pixels using Gaussian kernel weights \eqn{w_{ij}} when \code{nx} and
 #' \code{ny} are available, and the fourth promotes compact sparse spatial
-#' components when desired.
+#' components when desired. The regular package workflow uses the torch-based
+#' Adam optimizer, while \code{"lee"} is retained only as a diagnostic
+#' reference for plain vanilla Frobenius-loss NMF.
 #'
 #' For the current package workflow, a typical sequence is:
 #' \enumerate{
@@ -93,8 +106,11 @@
 spax_nmf <- function(x,
                            k = 3,
                            lambda_smooth = 0.01,
+                           solver = c("adam", "auto", "lee"),
                            lr = 0.02,
                            niter = 2000,
+                           tol = 1e-6,
+                           patience = 20,
                            center = FALSE,
                            scale = FALSE,
                            cuda = FALSE,
@@ -107,12 +123,9 @@ spax_nmf <- function(x,
                            sparse_components = NULL,
                            nx = NULL,
                            ny = NULL) {
-  if (!requireNamespace("torch", quietly = TRUE)) {
-    stop("The 'torch' package must be installed to use spax_nmf().", call. = FALSE)
-  }
-
   input_metadata <- merge_metadata(extract_matrix_metadata(x), metadata)
   x <- validate_input_matrix(x)
+  solver <- match.arg(solver)
 
   if (!is.numeric(k) || length(k) != 1L || is.na(k) || k < 1L) {
     stop("'k' must be a positive integer.", call. = FALSE)
@@ -137,6 +150,13 @@ spax_nmf <- function(x,
     stop("'niter' must be a positive integer.", call. = FALSE)
   }
   niter <- as.integer(niter)
+  if (!is.numeric(tol) || length(tol) != 1L || is.na(tol) || tol < 0) {
+    stop("'tol' must be a non-negative number.", call. = FALSE)
+  }
+  if (!is.numeric(patience) || length(patience) != 1L || is.na(patience) || patience < 1) {
+    stop("'patience' must be a positive integer.", call. = FALSE)
+  }
+  patience <- as.integer(patience)
 
   lambda_spatial_weights <- resolve_component_penalty(
     lambda_spatial,
@@ -167,63 +187,56 @@ spax_nmf <- function(x,
     )
   }
 
-  device <- select_torch_device(cuda)
-  X <- torch::torch_tensor(as.matrix(x), device = device)
-
   n_spectra <- nrow(x)
   n_wave <- ncol(x)
-  spatial_graph <- build_spatial_graph(
-    spatial_dims,
-    n_expected = n_spectra,
-    spatial_sigma = spatial_sigma
+  resolved_solver <- resolve_nmf_solver(
+    solver = solver,
+    x = x,
+    lambda_smooth = lambda_smooth,
+    lambda_spatial_weights = lambda_spatial_weights,
+    lambda_sparse_weights = lambda_sparse_weights
   )
 
-  A <- torch::torch_rand(n_spectra, k, device = device, requires_grad = TRUE)
-  S <- torch::torch_rand(k, n_wave, device = device, requires_grad = TRUE)
-  opt <- torch::optim_adam(list(A, S), lr = lr)
-
-  loss_history <- numeric(niter)
-
-  for (i in seq_len(niter)) {
-    opt$zero_grad()
-
-    Xhat <- A$matmul(S)
-    recon <- torch::torch_mean((X - Xhat)^2)
-
-    if (n_wave > 1L) {
-      diff <- S[, 2:n_wave] - S[, 1:(n_wave - 1L)]
-      smooth <- torch::torch_mean(diff^2)
-    } else {
-      smooth <- torch::torch_tensor(0, device = device)
+  if (resolved_solver == "lee") {
+    fit_core <- fit_nmf_lee(
+      x = x,
+      k = k,
+      niter = niter,
+      tol = tol,
+      patience = patience,
+      verbose = verbose
+    )
+  } else {
+    if (!requireNamespace("torch", quietly = TRUE)) {
+      stop("The 'torch' package must be installed to use spax_nmf() with solver = 'adam'.", call. = FALSE)
     }
 
-    spatial_smooth <- spatial_penalty(
-      A,
-      spatial_graph,
-      device = device,
-      component_weights = lambda_spatial_weights
+    device <- select_torch_device(cuda)
+    spatial_graph <- build_spatial_graph(
+      spatial_dims,
+      n_expected = n_spectra,
+      spatial_sigma = spatial_sigma
     )
-    sparse_abundance <- sparse_penalty(
-      A,
+    fit_core <- fit_nmf_adam(
+      x = x,
+      k = k,
+      lr = lr,
+      niter = niter,
+      tol = tol,
+      patience = patience,
+      lambda_smooth = lambda_smooth,
+      lambda_spatial_weights = lambda_spatial_weights,
+      lambda_sparse_weights = lambda_sparse_weights,
+      spatial_graph = spatial_graph,
       device = device,
-      component_weights = lambda_sparse_weights
+      verbose = verbose
     )
-    loss <- recon + lambda_smooth * smooth + spatial_smooth + sparse_abundance
-    loss$backward()
-    opt$step()
-
-    A$data()$clamp_(min = 0)
-    S$data()$clamp_(min = 0)
-
-    loss_history[i] <- as.numeric(loss$item())
-    if (verbose && (i %% 100L == 0L || i == 1L || i == niter)) {
-      message(sprintf("Iteration %d/%d, loss = %.6f", i, niter, loss_history[i]))
-    }
   }
 
-  spatial <- as.matrix(A$detach()$cpu())
-  spectra <- as.matrix(S$detach()$cpu())
-  reconstruction <- spatial %*% spectra
+  spatial <- fit_core$spatial
+  spectra <- fit_core$spectra
+  reconstruction <- fit_core$reconstruction
+  loss_history <- fit_core$loss
 
   fit <- list(
     spatial = spatial,
@@ -235,6 +248,9 @@ spax_nmf <- function(x,
     reconstruction = reconstruction,
     fitted = reconstruction,
     loss = loss_history,
+    solver = resolved_solver,
+    niter_run = fit_core$niter_run,
+    converged = fit_core$converged,
     metadata = input_metadata,
     spatial_dims = spatial_dims,
     lambda_smooth = lambda_smooth,
@@ -1196,6 +1212,185 @@ extract_matrix_metadata <- function(x) {
   }
 
   metadata
+}
+
+resolve_nmf_solver <- function(solver,
+                               x,
+                               lambda_smooth,
+                               lambda_spatial_weights,
+                               lambda_sparse_weights) {
+  if (solver %in% c("adam", "lee")) {
+    if (solver == "lee") {
+      if (lambda_smooth > 0 || any(lambda_spatial_weights > 0) || any(lambda_sparse_weights > 0)) {
+        stop(
+          "solver = 'lee' is only available for plain vanilla NMF with all penalties disabled.",
+          call. = FALSE
+        )
+      }
+      if (any(x < 0)) {
+        stop(
+          "solver = 'lee' requires a non-negative matrix after preprocessing.",
+          call. = FALSE
+        )
+      }
+    }
+    return(solver)
+  }
+
+  if (lambda_smooth == 0 &&
+      !any(lambda_spatial_weights > 0) &&
+      !any(lambda_sparse_weights > 0) &&
+      !any(x < 0)) {
+    return("lee")
+  }
+
+  "adam"
+}
+
+fit_nmf_lee <- function(x,
+                        k,
+                        niter,
+                        tol = 1e-6,
+                        patience = 20L,
+                        verbose = FALSE,
+                        eps = 1e-10) {
+  n_spectra <- nrow(x)
+  n_wave <- ncol(x)
+  A <- matrix(stats::runif(n_spectra * k, min = eps, max = 1), nrow = n_spectra, ncol = k)
+  S <- matrix(stats::runif(k * n_wave, min = eps, max = 1), nrow = k, ncol = n_wave)
+  loss_history <- numeric(niter)
+  stale_steps <- 0L
+  converged <- FALSE
+
+  for (i in seq_len(niter)) {
+    numer_s <- crossprod(A, x)
+    denom_s <- crossprod(A, A %*% S) + eps
+    S <- S * (numer_s / denom_s)
+    S[S < eps] <- eps
+
+    numer_a <- x %*% t(S)
+    denom_a <- (A %*% S) %*% t(S) + eps
+    A <- A * (numer_a / denom_a)
+    A[A < eps] <- eps
+
+    reconstruction <- A %*% S
+    loss_history[i] <- mean((x - reconstruction)^2)
+
+    if (verbose && (i %% 100L == 0L || i == 1L || i == niter)) {
+      message(sprintf("Iteration %d/%d, loss = %.6f", i, niter, loss_history[i]))
+    }
+
+    if (i > 1L) {
+      rel_improvement <- (loss_history[i - 1L] - loss_history[i]) / max(loss_history[i - 1L], eps)
+      if (!is.finite(rel_improvement) || rel_improvement <= tol) {
+        stale_steps <- stale_steps + 1L
+      } else {
+        stale_steps <- 0L
+      }
+      if (stale_steps >= patience) {
+        converged <- TRUE
+        loss_history <- loss_history[seq_len(i)]
+        break
+      }
+    }
+  }
+
+  list(
+    spatial = A,
+    spectra = S,
+    reconstruction = A %*% S,
+    loss = loss_history,
+    niter_run = length(loss_history),
+    converged = converged
+  )
+}
+
+fit_nmf_adam <- function(x,
+                         k,
+                         lr,
+                         niter,
+                         tol,
+                         patience,
+                         lambda_smooth,
+                         lambda_spatial_weights,
+                         lambda_sparse_weights,
+                         spatial_graph,
+                         device,
+                         verbose = FALSE) {
+  X <- torch::torch_tensor(as.matrix(x), device = device)
+  n_spectra <- nrow(x)
+  n_wave <- ncol(x)
+  A <- torch::torch_rand(n_spectra, k, device = device, requires_grad = TRUE)
+  S <- torch::torch_rand(k, n_wave, device = device, requires_grad = TRUE)
+  opt <- torch::optim_adam(list(A, S), lr = lr)
+  loss_history <- numeric(niter)
+  stale_steps <- 0L
+  converged <- FALSE
+
+  for (i in seq_len(niter)) {
+    opt$zero_grad()
+
+    Xhat <- A$matmul(S)
+    recon <- torch::torch_mean((X - Xhat)^2)
+
+    if (n_wave > 1L) {
+      diff <- S[, 2:n_wave] - S[, 1:(n_wave - 1L)]
+      smooth <- torch::torch_mean(diff^2)
+    } else {
+      smooth <- torch::torch_tensor(0, device = device)
+    }
+
+    spatial_smooth <- spatial_penalty(
+      A,
+      spatial_graph,
+      device = device,
+      component_weights = lambda_spatial_weights
+    )
+    sparse_abundance <- sparse_penalty(
+      A,
+      device = device,
+      component_weights = lambda_sparse_weights
+    )
+
+    loss <- recon + lambda_smooth * smooth + spatial_smooth + sparse_abundance
+    loss$backward()
+    opt$step()
+
+    A$data()$clamp_(min = 0)
+    S$data()$clamp_(min = 0)
+
+    loss_history[i] <- as.numeric(loss$item())
+    if (verbose && (i %% 100L == 0L || i == 1L || i == niter)) {
+      message(sprintf("Iteration %d/%d, loss = %.6f", i, niter, loss_history[i]))
+    }
+
+    if (i > 1L) {
+      rel_improvement <- (loss_history[i - 1L] - loss_history[i]) / max(loss_history[i - 1L], 1e-12)
+      if (!is.finite(rel_improvement) || rel_improvement <= tol) {
+        stale_steps <- stale_steps + 1L
+      } else {
+        stale_steps <- 0L
+      }
+      if (stale_steps >= patience) {
+        converged <- TRUE
+        loss_history <- loss_history[seq_len(i)]
+        break
+      }
+    }
+  }
+
+  spatial <- as.matrix(A$detach()$cpu())
+  spectra <- as.matrix(S$detach()$cpu())
+  reconstruction <- spatial %*% spectra
+
+  list(
+    spatial = spatial,
+    spectra = spectra,
+    reconstruction = reconstruction,
+    loss = loss_history,
+    niter_run = length(loss_history),
+    converged = converged
+  )
 }
 
 merge_metadata <- function(x, y) {

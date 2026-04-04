@@ -1,0 +1,3 @@
+"method","solver","reconstruction_mse","spectra_mse","map_mse"
+"SpaxNMF","adam",2.01498048247184e-08,0.035387543310133,0.0370009070391236
+"NMF package","lee",4.28325846201976e-12,0.0242607678593184,0.0416327425805008

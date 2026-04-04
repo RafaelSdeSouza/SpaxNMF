@@ -100,6 +100,10 @@ ul.task-list li input[type="checkbox"] {
 <span class="menu-text">Model</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./toy-benchmark.html"> 
+<span class="menu-text">Toy Benchmark</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link active" href="./benchmark.html" aria-current="page"> 
 <span class="menu-text">Benchmark</span></a>
   </li>  
@@ -182,7 +186,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="current-figure" class="level2">
 <h2 class="anchored" data-anchor-id="current-figure">Current Figure</h2>
-<p>The saved figure emphasizes the candidate compact components, their component-weight maps, and a residual-energy comparison at fixed rank.</p>
+<p>The saved figure emphasizes where the model-selected sparse-component peaks land on an asinh-stretched white-light image, how the corresponding sparse-component maps look, and how the reconstruction compares at those peak locations.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div>
@@ -252,8 +256,8 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="how-to-read-the-figure">How To Read The Figure</h2>
 <ul>
 <li>The reconstruction panel checks whether the mixed prior preserves acceptable spaxel-level fits.</li>
-<li>The compact-component spectra panel is diagnostic only: on this mixed cube the recovered basis spectra are still not clean astrophysical templates, so the main comparison is relative rather than interpretive.</li>
-<li>The compact-component maps panel is the main spatial diagnostic for whether the sparse prior is isolating localized structure.</li>
+<li>The white-light panel is the key visual check: if the model is isolating GC-like sources, the sparse-component peaks should land on visually compact knots in the asinh image.</li>
+<li>The sparse-component maps panel is the main spatial diagnostic for whether the sparse prior is isolating localized structure.</li>
 <li>The residual-energy panel is secondary: PCA is expected to win on pure rank-(k) squared-error reconstruction.</li>
 </ul>
 <div class="cell">
@@ -261,6 +265,7 @@ ul.task-list li input[type="checkbox"] {
 <pre><code>In the current saved run, spatial NMF improves the vanilla NMF reconstruction MSE from 0.000399 to 0.000322, while increasing the designated sparse-component top-1% concentration from 0.057 to 0.113.</code></pre>
 </div>
 </div>
+<p>Even in the saved run above, the sparse components should be read cautiously: the current model improves concentration metrics relative to vanilla NMF, but the candidate peaks still collapse onto the bright central galaxy light rather than separating visually distinct GC-like sources. At this stage the benchmark is a useful failure case, not a polished detection result.</p>
 </section>
 <section id="recommended-settings" class="level2">
 <h2 class="anchored" data-anchor-id="recommended-settings">Recommended Settings</h2>
@@ -275,7 +280,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="interpretation" class="level2">
 <h2 class="anchored" data-anchor-id="interpretation">Interpretation</h2>
-<p>PCA remains the strongest baseline for pure rank-(k) squared-error reconstruction, so the main question is not whether NMF beats PCA on MSE alone. The relevant question is whether spatial NMF preserves acceptable reconstruction quality while yielding cleaner and more interpretable component-weight maps.</p>
+<p>PCA remains the strongest baseline for pure rank-(k) squared-error reconstruction, so the main question is not whether NMF beats PCA on MSE alone. The relevant question is whether spatial NMF preserves acceptable reconstruction quality while yielding cleaner and more interpretable component-weight maps. On the current NGC1512 run, the answer is only partial: the mixed prior improves concentration and reconstruction relative to vanilla NMF, but it does not yet produce a convincing GC-isolation result.</p>
 
 
 </section>

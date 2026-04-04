@@ -12,14 +12,15 @@ Authors@R:
 Description: SpaxNMF provides tools for reshaping integral field spectroscopy
     (IFU) cubes, fitting regularized non-negative matrix factorization
     models, and inspecting recovered component spectra and spatial weights.
-    The package is being refocused around reproducible IFU demos and
-    comparisons between PCA, vanilla NMF, and future spatially aware NMF
-    models on MaNGA-like data.
+    The package supports reproducible IFU demonstrations, controlled toy
+    benchmarks, and matched comparisons between PCA, vanilla NMF, and
+    spatially regularized NMF on real and synthetic data.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Imports:
     torch
 Suggests:
+    NMF,
     knitr,
     rmarkdown,
     testthat,

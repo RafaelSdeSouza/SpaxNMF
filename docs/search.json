@@ -18,7 +18,7 @@
     "href": "benchmark.html#current-figure",
     "title": "Benchmark",
     "section": "Current Figure",
-    "text": "Current Figure\nThe saved figure emphasizes the candidate compact components, their component-weight maps, and a residual-energy comparison at fixed rank."
+    "text": "Current Figure\nThe saved figure emphasizes where the model-selected sparse-component peaks land on an asinh-stretched white-light image, how the corresponding sparse-component maps look, and how the reconstruction compares at those peak locations."
   },
   {
     "objectID": "benchmark.html#summary-metrics",
@@ -32,7 +32,7 @@
     "href": "benchmark.html#how-to-read-the-figure",
     "title": "Benchmark",
     "section": "How To Read The Figure",
-    "text": "How To Read The Figure\n\nThe reconstruction panel checks whether the mixed prior preserves acceptable spaxel-level fits.\nThe compact-component spectra panel is diagnostic only: on this mixed cube the recovered basis spectra are still not clean astrophysical templates, so the main comparison is relative rather than interpretive.\nThe compact-component maps panel is the main spatial diagnostic for whether the sparse prior is isolating localized structure.\nThe residual-energy panel is secondary: PCA is expected to win on pure rank-(k) squared-error reconstruction.\n\n\n\nIn the current saved run, spatial NMF improves the vanilla NMF reconstruction MSE from 0.000399 to 0.000322, while increasing the designated sparse-component top-1% concentration from 0.057 to 0.113."
+    "text": "How To Read The Figure\n\nThe reconstruction panel checks whether the mixed prior preserves acceptable spaxel-level fits.\nThe white-light panel is the key visual check: if the model is isolating GC-like sources, the sparse-component peaks should land on visually compact knots in the asinh image.\nThe sparse-component maps panel is the main spatial diagnostic for whether the sparse prior is isolating localized structure.\nThe residual-energy panel is secondary: PCA is expected to win on pure rank-(k) squared-error reconstruction.\n\n\n\nIn the current saved run, spatial NMF improves the vanilla NMF reconstruction MSE from 0.000399 to 0.000322, while increasing the designated sparse-component top-1% concentration from 0.057 to 0.113.\n\n\nEven in the saved run above, the sparse components should be read cautiously: the current model improves concentration metrics relative to vanilla NMF, but the candidate peaks still collapse onto the bright central galaxy light rather than separating visually distinct GC-like sources. At this stage the benchmark is a useful failure case, not a polished detection result."
   },
   {
     "objectID": "benchmark.html#recommended-settings",
@@ -46,7 +46,196 @@
     "href": "benchmark.html#interpretation",
     "title": "Benchmark",
     "section": "Interpretation",
-    "text": "Interpretation\nPCA remains the strongest baseline for pure rank-(k) squared-error reconstruction, so the main question is not whether NMF beats PCA on MSE alone. The relevant question is whether spatial NMF preserves acceptable reconstruction quality while yielding cleaner and more interpretable component-weight maps."
+    "text": "Interpretation\nPCA remains the strongest baseline for pure rank-(k) squared-error reconstruction, so the main question is not whether NMF beats PCA on MSE alone. The relevant question is whether spatial NMF preserves acceptable reconstruction quality while yielding cleaner and more interpretable component-weight maps. On the current NGC1512 run, the answer is only partial: the mixed prior improves concentration and reconstruction relative to vanilla NMF, but it does not yet produce a convincing GC-isolation result."
+  },
+  {
+    "objectID": "ifu-workflow.html",
+    "href": "ifu-workflow.html",
+    "title": "IFU Workflow",
+    "section": "",
+    "text": "SpaxNMF expects a spaxel-by-wavelength matrix. For a FITS cube, the standard workflow is to read the cube, reshape it, and clean invalid values before fitting."
+  },
+  {
+    "objectID": "ifu-workflow.html#fits-to-matrix",
+    "href": "ifu-workflow.html#fits-to-matrix",
+    "title": "IFU Workflow",
+    "section": "",
+    "text": "SpaxNMF expects a spaxel-by-wavelength matrix. For a FITS cube, the standard workflow is to read the cube, reshape it, and clean invalid values before fitting."
+  },
+  {
+    "objectID": "ifu-workflow.html#fit-and-inspect",
+    "href": "ifu-workflow.html#fit-and-inspect",
+    "title": "IFU Workflow",
+    "section": "Fit and inspect",
+    "text": "Fit and inspect\nExample component-weight maps from the bundled synthetic cube:"
+  },
+  {
+    "objectID": "ifu-workflow.html#reconstruction-outputs",
+    "href": "ifu-workflow.html#reconstruction-outputs",
+    "title": "IFU Workflow",
+    "section": "Reconstruction outputs",
+    "text": "Reconstruction outputs"
+  },
+  {
+    "objectID": "ifu-workflow.html#metadata",
+    "href": "ifu-workflow.html#metadata",
+    "title": "IFU Workflow",
+    "section": "Metadata",
+    "text": "Metadata\nWhen the input to cube_to_matrix() is a FITS-like list object, non-image entries are carried forward as metadata. That metadata can be recovered from the fitted object or reconstructed cube with cube_metadata().\nIf redshift information is stored in the FITS-side metadata, it will now be preserved as metadata and can be carried into fitted and reconstructed outputs."
+  },
+  {
+    "objectID": "ifu-workflow.html#comparative-analyses",
+    "href": "ifu-workflow.html#comparative-analyses",
+    "title": "IFU Workflow",
+    "section": "Comparative analyses",
+    "text": "Comparative analyses\nPublic LOGCUBE products can be used to compare PCA, vanilla NMF, and spatial NMF on the same target after matched preprocessing."
+  },
+  {
+    "objectID": "ifu-workflow.html#benchmark-script",
+    "href": "ifu-workflow.html#benchmark-script",
+    "title": "IFU Workflow",
+    "section": "Benchmark script",
+    "text": "Benchmark script\nThe repository also includes a real-cube diagnostic script that applies the same preprocessing and figure style to external FITS cubes:\nSPAXNMF_REAL_CUBE=/path/to/cube.fits \\\nSPAXNMF_REAL_OUTPUT=site/images/real-benchmark.png \\\nRscript scripts/render_real_manga_diagnostic.R"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "SpaxNMF",
+    "section": "",
+    "text": "Spatially aware NMF for integral-field spectroscopy\n\n\n\n\nSpaxNMF fits non-negative component spectra together with component-weight maps, combining smooth spectral regularization, Gaussian spatial coupling, and optional sparse priors for compact sources.\n\n\nGet Started See the Benchmark\n\n\n\n\n\n\n\nShared non-negative component spectra recovered from the full cube.\n\n\nGaussian spatial coupling on component-weight maps for extended structure.\n\n\nOptional sparse priors for compact-source components such as GC-like signals.\n\n\nReal-cube diagnostics against PCA and vanilla NMF under matched preprocessing.\n\n\n\nThe full objective, kernel weighting, and optimization details are documented on the Model page."
+  },
+  {
+    "objectID": "index.html#core-factorization",
+    "href": "index.html#core-factorization",
+    "title": "SpaxNMF",
+    "section": "Core Factorization",
+    "text": "Core Factorization\n\n\n\nFactorization\n\n\nShared spectra, spatially varying weights\n\n\\[\nX \\approx AS\n\\]\n\nX is the spaxel-by-wavelength matrix, A is the component-weight matrix, and S contains the component spectra.\n\n\n\n\nSpatial term\n\n\nWeighted coherence between neighboring spaxels\n\n\\[\nw_{ij} = \\exp\\left(-\\frac{d_{ij}^2}{2\\sigma^2}\\right)\n\\]\n\nThis term discourages noisy salt-and-pepper maps by penalizing strong changes between nearby component weights while allowing distant spaxels to decouple."
+  },
+  {
+    "objectID": "index.html#quick-workflow",
+    "href": "index.html#quick-workflow",
+    "title": "SpaxNMF",
+    "section": "Quick Workflow",
+    "text": "Quick Workflow\n\n\n\n\n\nflowchart LR\n  A[\"IFU cube&lt;br/&gt;nx × ny × nλ\"] --&gt; B[\"cube_to_matrix()\"]\n  B --&gt; C[\"spaxel × wavelength matrix X\"]\n  C --&gt; D[\"spax_nmf()\"]\n  D --&gt; E[\"component-weight maps A\"]\n  D --&gt; F[\"component spectra S\"]\n  D --&gt; G[\"reconstruction AS\"]\n  E --&gt; H[\"component_map()\"]\n  F --&gt; I[\"plot(type = 'spectra')\"]\n  G --&gt; J[\"predict(type = 'cube') / fitted()\"]"
+  },
+  {
+    "objectID": "index.html#real-cube-benchmark",
+    "href": "index.html#real-cube-benchmark",
+    "title": "SpaxNMF",
+    "section": "Real-Cube Benchmark",
+    "text": "Real-Cube Benchmark\n\n\n\nNGC1512 galaxy + compact sources + sky\n\n\nThe current benchmark uses NGC1512_cube_mockGCs.fits, a mixed IFU cube containing extended galaxy structure, compact GC-like sources, and sky contamination in the same field. The comparison applies the same outer-spaxel sky subtraction and matched preprocessing before fitting PCA, vanilla NMF, and the mixed spatial+sparse model.\n\n\n\n&lt;p class='benchmark-inline'&gt;On the saved NGC1512 benchmark, the mixed spatial+sparse fit reduces the vanilla NMF MSE from 0.000399 to 0.000322 while raising the designated compact-component top-1% concentration from 0.057 to 0.113.&lt;/p&gt;\n\n\n\nUse the benchmark page for the full figure, saved metrics, and the exact run configuration used to generate them.\n\n\nOpen the real-cube benchmark\n\n\n\n\nWhat the benchmark is for\n\n\nThis benchmark is intended as a technical validation target rather than a front-page showcase. It is useful for checking whether the mixed spatial+sparse prior improves compact-component concentration and preserves acceptable reconstruction quality under matched preprocessing.\n\n\n\nPCA remains the rank-(k) squared-error baseline.\n\n\nVanilla NMF provides the non-negative comparison without spatial coupling.\n\n\nSpaxNMF adds Gaussian spatial smoothing and optional sparse compact-source components.\n\n\nThe full figure, saved metrics, and run settings live on the benchmark page.\n\n\n\nUse the benchmark page when you want the detailed diagnostic, not the main landing-page overview."
+  },
+  {
+    "objectID": "index.html#main-entry-points",
+    "href": "index.html#main-entry-points",
+    "title": "SpaxNMF",
+    "section": "Main Entry Points",
+    "text": "Main Entry Points\n\n\n\nFit models\n\n\nspax_nmf() fits the torch model and returns spectra, weights, reconstructions, and optimization history.\n\n\n\n\nReshape data\n\n\ncube_to_matrix() and matrix_to_cube() move between IFU cubes and the matrix view required by the optimizer.\n\n\n\n\nInspect results\n\n\ncomponent_map(), component_spectrum(), plot(), and plot_reconstruction() provide quick diagnostics.\n\n\n\n\nBenchmark on toy and real targets\n\n\nThe website includes a controlled toy sanity check for standalone NMF and a real mixed galaxy+GC+sky benchmark under matched preprocessing."
+  },
+  {
+    "objectID": "index.html#installation",
+    "href": "index.html#installation",
+    "title": "SpaxNMF",
+    "section": "Installation",
+    "text": "Installation\n# install.packages(\"remotes\")\nremotes::install_github(\"RafaelSdeSouza/SpaxNMF\")\ntorch must be available in the local R installation."
+  },
+  {
+    "objectID": "model.html",
+    "href": "model.html",
+    "title": "Model",
+    "section": "",
+    "text": "SpaxNMF represents an IFU cube as a matrix (X _{}^{n p}), with one row per spaxel and one column per wavelength channel. The model seeks a low-rank non-negative factorization\n\\[\nX \\approx AS\n\\]\nwhere:\n\n(A _{}^{n k}) contains component weights for each spaxel\n(S _{}^{k p}) contains the component spectra\n(k) is the chosen factorization rank\n\nA should be interpreted simply as a set of component-weight maps over the field."
+  },
+  {
+    "objectID": "model.html#overview",
+    "href": "model.html#overview",
+    "title": "Model",
+    "section": "",
+    "text": "SpaxNMF represents an IFU cube as a matrix (X _{}^{n p}), with one row per spaxel and one column per wavelength channel. The model seeks a low-rank non-negative factorization\n\\[\nX \\approx AS\n\\]\nwhere:\n\n(A _{}^{n k}) contains component weights for each spaxel\n(S _{}^{k p}) contains the component spectra\n(k) is the chosen factorization rank\n\nA should be interpreted simply as a set of component-weight maps over the field."
+  },
+  {
+    "objectID": "model.html#objective-function",
+    "href": "model.html#objective-function",
+    "title": "Model",
+    "section": "Objective Function",
+    "text": "Objective Function\nThe current implementation minimizes\n\\[\n\\mathcal{L}(A,S)=\n\\|X-AS\\|_F^2\n+\\lambda_S \\|DS\\|_F^2\n+\\sum_c \\lambda_{A,c}\\sum_{i,j} w_{ij}(A_{ic}-A_{jc})^2\n+\\sum_c \\lambda_{C,c}\\|A_{:,c}\\|_1\n\\]\nwith Gaussian spatial couplings\n\\[\nw_{ij} = \\exp\\left(-\\frac{d_{ij}^2}{2\\sigma^2}\\right).\n\\]\n\n\n\nReconstruction term\n\n\n(|X-AS|_F^2) matches the model to the observed spectra.\n\n\n\n\nSpectral smoothness\n\n\n(_S |DS|_F^2) penalizes channel-to-channel roughness in the recovered component spectra.\n\n\n\n\nSpatial coherence\n\n\n(_{A,c}) controls how strongly nearby spaxels are encouraged to carry similar weights for component (c)."
+  },
+  {
+    "objectID": "model.html#why-the-spatial-term-matters",
+    "href": "model.html#why-the-spatial-term-matters",
+    "title": "Model",
+    "section": "Why The Spatial Term Matters",
+    "text": "Why The Spatial Term Matters\nThe spatial regularization does not smooth the spectra directly. It acts on the component weights in (A):\n\\[\n\\sum_{i,j} w_{ij}(A_{ic}-A_{jc})^2\n\\]\nfor each selected component (c). In practice this:\n\nsuppresses salt-and-pepper weight maps\nstabilizes the decomposition under noise\nencourages extended components to remain spatially coherent\nleaves distant spaxels free to differ because the kernel weight decays with distance"
+  },
+  {
+    "objectID": "model.html#compact-source-components",
+    "href": "model.html#compact-source-components",
+    "title": "Model",
+    "section": "Compact-Source Components",
+    "text": "Compact-Source Components\nSelected components can also receive a sparsity prior\n\\[\n\\|A_{:,c}\\|_1\n\\]\nwhich is useful when a component is expected to be compact rather than smooth. This is the mechanism currently used to test GC-like components against a smooth galaxy/background decomposition."
+  },
+  {
+    "objectID": "model.html#optimization",
+    "href": "model.html#optimization",
+    "title": "Model",
+    "section": "Optimization",
+    "text": "Optimization\nThe torch implementation follows a simple projected-gradient strategy:\n\nInitialize (A) and (S) randomly with positive entries.\nOptimize the loss with Adam.\nClamp (A) and (S) to remain non-negative after each step.\nReturn spectra, component weights, and the reconstruction (AS)."
+  },
+  {
+    "objectID": "model.html#sanity-checks",
+    "href": "model.html#sanity-checks",
+    "title": "Model",
+    "section": "Sanity Checks",
+    "text": "Sanity Checks\nThe current tests enforce two baseline conditions:\n\nsetting lambda_spatial = 0 recovers the original smooth NMF objective\nadding sparse priors improves recovery of compact-source components on a synthetic IFU mock\n\nSee Getting Started for code examples and Benchmark for the current real-cube test."
+  },
+  {
+    "objectID": "reference.html",
+    "href": "reference.html",
+    "title": "Reference",
+    "section": "",
+    "text": "spax_nmf(): fit the regularized non-negative matrix factorization model.\nsummary(): report rank, dimensions, iteration count, and final loss.\nprint(): compact display of the fitted object."
+  },
+  {
+    "objectID": "reference.html#fitting",
+    "href": "reference.html#fitting",
+    "title": "Reference",
+    "section": "",
+    "text": "spax_nmf(): fit the regularized non-negative matrix factorization model.\nsummary(): report rank, dimensions, iteration count, and final loss.\nprint(): compact display of the fitted object."
+  },
+  {
+    "objectID": "reference.html#matrix-and-cube-helpers",
+    "href": "reference.html#matrix-and-cube-helpers",
+    "title": "Reference",
+    "section": "Matrix and Cube Helpers",
+    "text": "Matrix and Cube Helpers\n\ncube_to_matrix(): reshape an IFU cube into a spaxel-by-wavelength matrix.\nmatrix_to_cube(): convert a matrix reconstruction back into cube form.\ncube_metadata(): recover metadata carried through reshaping and fitting."
+  },
+  {
+    "objectID": "reference.html#components",
+    "href": "reference.html#components",
+    "title": "Reference",
+    "section": "Components",
+    "text": "Components\n\ncomponent_map(): extract a single component-weight map.\ncomponent_spectrum(): extract one recovered component spectrum.\ncomponent_reconstruction(): isolate the reconstruction from one component."
+  },
+  {
+    "objectID": "reference.html#model-methods",
+    "href": "reference.html#model-methods",
+    "title": "Reference",
+    "section": "Model Methods",
+    "text": "Model Methods\n\nbasis(): return spectra as wavelength-by-component.\ncoef(): return component weights as component-by-spaxel.\nfitted(): recover the full reconstruction.\npredict(): infer component weights or reconstructions for new data.\nresiduals(): compute data minus model."
+  },
+  {
+    "objectID": "reference.html#visualization",
+    "href": "reference.html#visualization",
+    "title": "Reference",
+    "section": "Visualization",
+    "text": "Visualization\n\nplot(type = \"spectra\"): inspect recovered component spectra.\nplot(type = \"maps\"): inspect component-weight maps.\nplot(type = \"loss\"): inspect optimization behavior.\nplot_reconstruction(): compare observed and reconstructed spectra."
+  },
+  {
+    "objectID": "reference.html#reproducible-examples",
+    "href": "reference.html#reproducible-examples",
+    "title": "Reference",
+    "section": "Reproducible Examples",
+    "text": "Reproducible Examples\n\nsimulate_ifu_cube(): bundled synthetic IFU example.\ndemo_ifu_unmix(): compact demonstration of the standard workflow."
   },
   {
     "objectID": "getting-started.html",
@@ -105,192 +294,38 @@
     "text": "Real-data examples\nThe same workflow can be applied to curated survey cubes in order to compare:\n\nPCA components\nvanilla NMF components\nspatial NMF components\n\nusing a consistent component-spectrum figure and matched preprocessing across methods."
   },
   {
-    "objectID": "reference.html",
-    "href": "reference.html",
-    "title": "Reference",
+    "objectID": "toy-benchmark.html",
+    "href": "toy-benchmark.html",
+    "title": "Toy Benchmark",
     "section": "",
-    "text": "spax_nmf(): fit the regularized non-negative matrix factorization model.\nsummary(): report rank, dimensions, iteration count, and final loss.\nprint(): compact display of the fitted object."
+    "text": "This page isolates the base matrix factorization problem from the full IFU stress tests. The toy data are constructed to be exactly low-rank, with non-negative component spectra and non-negative spatial weights. Spatial and sparsity penalties are turned off for spax_nmf(), so this comparison checks the standalone vanilla NMF fit directly against NMF::nmf(). Under these conditions spax_nmf() still uses the torch-based Adam optimizer, with all regularization weights set to zero, so the comparison checks the actual package implementation against a standard NMF::nmf() reference.\n\nIf this toy benchmark behaves well while the real-cube benchmark does not, the core vanilla NMF machinery is likely fine and the remaining difficulty lies in the astrophysical data model rather than in the factorization code itself."
   },
   {
-    "objectID": "reference.html#fitting",
-    "href": "reference.html#fitting",
-    "title": "Reference",
+    "objectID": "toy-benchmark.html#controlled-sanity-check",
+    "href": "toy-benchmark.html#controlled-sanity-check",
+    "title": "Toy Benchmark",
     "section": "",
-    "text": "spax_nmf(): fit the regularized non-negative matrix factorization model.\nsummary(): report rank, dimensions, iteration count, and final loss.\nprint(): compact display of the fitted object."
+    "text": "This page isolates the base matrix factorization problem from the full IFU stress tests. The toy data are constructed to be exactly low-rank, with non-negative component spectra and non-negative spatial weights. Spatial and sparsity penalties are turned off for spax_nmf(), so this comparison checks the standalone vanilla NMF fit directly against NMF::nmf(). Under these conditions spax_nmf() still uses the torch-based Adam optimizer, with all regularization weights set to zero, so the comparison checks the actual package implementation against a standard NMF::nmf() reference.\n\nIf this toy benchmark behaves well while the real-cube benchmark does not, the core vanilla NMF machinery is likely fine and the remaining difficulty lies in the astrophysical data model rather than in the factorization code itself."
   },
   {
-    "objectID": "reference.html#matrix-and-cube-helpers",
-    "href": "reference.html#matrix-and-cube-helpers",
-    "title": "Reference",
-    "section": "Matrix and Cube Helpers",
-    "text": "Matrix and Cube Helpers\n\ncube_to_matrix(): reshape an IFU cube into a spaxel-by-wavelength matrix.\nmatrix_to_cube(): convert a matrix reconstruction back into cube form.\ncube_metadata(): recover metadata carried through reshaping and fitting."
+    "objectID": "toy-benchmark.html#current-figure",
+    "href": "toy-benchmark.html#current-figure",
+    "title": "Toy Benchmark",
+    "section": "Current Figure",
+    "text": "Current Figure"
   },
   {
-    "objectID": "reference.html#components",
-    "href": "reference.html#components",
-    "title": "Reference",
-    "section": "Components",
-    "text": "Components\n\ncomponent_map(): extract a single component-weight map.\ncomponent_spectrum(): extract one recovered component spectrum.\ncomponent_reconstruction(): isolate the reconstruction from one component."
+    "objectID": "toy-benchmark.html#summary-metrics",
+    "href": "toy-benchmark.html#summary-metrics",
+    "title": "Toy Benchmark",
+    "section": "Summary Metrics",
+    "text": "Summary Metrics\n\n\n\nCurrent toy benchmark summary.\n\n\nmethod\nsolver\nreconstruction_mse\nspectra_mse\nmap_mse\n\n\n\n\nSpaxNMF\nadam\n0\n0.03539\n0.03700\n\n\nNMF package\nlee\n0\n0.02426\n0.04163\n\n\n\n\n\nAll three metrics are lower-is-better:\n\nreconstruction_mse: data-minus-model error over the whole toy matrix\nspectra_mse: component-spectrum mismatch after matching fitted components to truth\nmap_mse: component-weight map mismatch after the same matching step"
   },
   {
-    "objectID": "reference.html#model-methods",
-    "href": "reference.html#model-methods",
-    "title": "Reference",
-    "section": "Model Methods",
-    "text": "Model Methods\n\nbasis(): return spectra as wavelength-by-component.\ncoef(): return component weights as component-by-spaxel.\nfitted(): recover the full reconstruction.\npredict(): infer component weights or reconstructions for new data.\nresiduals(): compute data minus model."
-  },
-  {
-    "objectID": "reference.html#visualization",
-    "href": "reference.html#visualization",
-    "title": "Reference",
-    "section": "Visualization",
-    "text": "Visualization\n\nplot(type = \"spectra\"): inspect recovered component spectra.\nplot(type = \"maps\"): inspect component-weight maps.\nplot(type = \"loss\"): inspect optimization behavior.\nplot_reconstruction(): compare observed and reconstructed spectra."
-  },
-  {
-    "objectID": "reference.html#reproducible-examples",
-    "href": "reference.html#reproducible-examples",
-    "title": "Reference",
-    "section": "Reproducible Examples",
-    "text": "Reproducible Examples\n\nsimulate_ifu_cube(): bundled synthetic IFU example.\ndemo_ifu_unmix(): compact demonstration of the standard workflow."
-  },
-  {
-    "objectID": "model.html",
-    "href": "model.html",
-    "title": "Model",
-    "section": "",
-    "text": "SpaxNMF represents an IFU cube as a matrix (X _{}^{n p}), with one row per spaxel and one column per wavelength channel. The model seeks a low-rank non-negative factorization\n\\[\nX \\approx AS\n\\]\nwhere:\n\n(A _{}^{n k}) contains component weights for each spaxel\n(S _{}^{k p}) contains the component spectra\n(k) is the chosen factorization rank\n\nA should be interpreted simply as a set of component-weight maps over the field."
-  },
-  {
-    "objectID": "model.html#overview",
-    "href": "model.html#overview",
-    "title": "Model",
-    "section": "",
-    "text": "SpaxNMF represents an IFU cube as a matrix (X _{}^{n p}), with one row per spaxel and one column per wavelength channel. The model seeks a low-rank non-negative factorization\n\\[\nX \\approx AS\n\\]\nwhere:\n\n(A _{}^{n k}) contains component weights for each spaxel\n(S _{}^{k p}) contains the component spectra\n(k) is the chosen factorization rank\n\nA should be interpreted simply as a set of component-weight maps over the field."
-  },
-  {
-    "objectID": "model.html#objective-function",
-    "href": "model.html#objective-function",
-    "title": "Model",
-    "section": "Objective Function",
-    "text": "Objective Function\nThe current implementation minimizes\n\\[\n\\mathcal{L}(A,S)=\n\\|X-AS\\|_F^2\n+\\lambda_S \\|DS\\|_F^2\n+\\sum_c \\lambda_{A,c}\\sum_{i,j} w_{ij}(A_{ic}-A_{jc})^2\n+\\sum_c \\lambda_{C,c}\\|A_{:,c}\\|_1\n\\]\nwith Gaussian spatial couplings\n\\[\nw_{ij} = \\exp\\left(-\\frac{d_{ij}^2}{2\\sigma^2}\\right).\n\\]\n\n\n\nReconstruction term\n\n\n(|X-AS|_F^2) matches the model to the observed spectra.\n\n\n\n\nSpectral smoothness\n\n\n(_S |DS|_F^2) penalizes channel-to-channel roughness in the recovered component spectra.\n\n\n\n\nSpatial coherence\n\n\n(_{A,c}) controls how strongly nearby spaxels are encouraged to carry similar weights for component (c)."
-  },
-  {
-    "objectID": "model.html#why-the-spatial-term-matters",
-    "href": "model.html#why-the-spatial-term-matters",
-    "title": "Model",
-    "section": "Why The Spatial Term Matters",
-    "text": "Why The Spatial Term Matters\nThe spatial regularization does not smooth the spectra directly. It acts on the component weights in (A):\n\\[\n\\sum_{i,j} w_{ij}(A_{ic}-A_{jc})^2\n\\]\nfor each selected component (c). In practice this:\n\nsuppresses salt-and-pepper weight maps\nstabilizes the decomposition under noise\nencourages extended components to remain spatially coherent\nleaves distant spaxels free to differ because the kernel weight decays with distance"
-  },
-  {
-    "objectID": "model.html#compact-source-components",
-    "href": "model.html#compact-source-components",
-    "title": "Model",
-    "section": "Compact-Source Components",
-    "text": "Compact-Source Components\nSelected components can also receive a sparsity prior\n\\[\n\\|A_{:,c}\\|_1\n\\]\nwhich is useful when a component is expected to be compact rather than smooth. This is the mechanism currently used to test GC-like components against a smooth galaxy/background decomposition."
-  },
-  {
-    "objectID": "model.html#optimization",
-    "href": "model.html#optimization",
-    "title": "Model",
-    "section": "Optimization",
-    "text": "Optimization\nThe torch implementation follows a simple projected-gradient strategy:\n\nInitialize (A) and (S) randomly with positive entries.\nOptimize the loss with Adam.\nClamp (A) and (S) to remain non-negative after each step.\nReturn spectra, component weights, and the reconstruction (AS)."
-  },
-  {
-    "objectID": "model.html#sanity-checks",
-    "href": "model.html#sanity-checks",
-    "title": "Model",
-    "section": "Sanity Checks",
-    "text": "Sanity Checks\nThe current tests enforce two baseline conditions:\n\nsetting lambda_spatial = 0 recovers the original smooth NMF objective\nadding sparse priors improves recovery of compact-source components on a synthetic IFU mock\n\nSee Getting Started for code examples and Benchmark for the current real-cube test."
-  },
-  {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "SpaxNMF",
-    "section": "",
-    "text": "Spatially aware NMF for integral-field spectroscopy\n\n\n\n\nSpaxNMF fits non-negative component spectra together with component-weight maps, combining smooth spectral regularization, Gaussian spatial coupling, and optional sparse priors for compact sources.\n\n\nGet Started See the Benchmark\n\n\n\n\n\n\n\nShared non-negative component spectra recovered from the full cube.\n\n\nGaussian spatial coupling on component-weight maps for extended structure.\n\n\nOptional sparse priors for compact-source components such as GC-like signals.\n\n\nReal-cube diagnostics against PCA and vanilla NMF under matched preprocessing.\n\n\n\nThe full objective, kernel weighting, and optimization details are documented on the Model page."
-  },
-  {
-    "objectID": "index.html#core-factorization",
-    "href": "index.html#core-factorization",
-    "title": "SpaxNMF",
-    "section": "Core Factorization",
-    "text": "Core Factorization\n\n\n\nFactorization\n\n\nShared spectra, spatially varying weights\n\n\\[\nX \\approx AS\n\\]\n\nX is the spaxel-by-wavelength matrix, A is the component-weight matrix, and S contains the component spectra.\n\n\n\n\nSpatial term\n\n\nWeighted coherence between neighboring spaxels\n\n\\[\nw_{ij} = \\exp\\left(-\\frac{d_{ij}^2}{2\\sigma^2}\\right)\n\\]\n\nThis term discourages noisy salt-and-pepper maps by penalizing strong changes between nearby component weights while allowing distant spaxels to decouple."
-  },
-  {
-    "objectID": "index.html#quick-workflow",
-    "href": "index.html#quick-workflow",
-    "title": "SpaxNMF",
-    "section": "Quick Workflow",
-    "text": "Quick Workflow\n\n\n\n\n\nflowchart LR\n  A[\"IFU cube&lt;br/&gt;nx × ny × nλ\"] --&gt; B[\"cube_to_matrix()\"]\n  B --&gt; C[\"spaxel × wavelength matrix X\"]\n  C --&gt; D[\"spax_nmf()\"]\n  D --&gt; E[\"component-weight maps A\"]\n  D --&gt; F[\"component spectra S\"]\n  D --&gt; G[\"reconstruction AS\"]\n  E --&gt; H[\"component_map()\"]\n  F --&gt; I[\"plot(type = 'spectra')\"]\n  G --&gt; J[\"predict(type = 'cube') / fitted()\"]"
-  },
-  {
-    "objectID": "index.html#real-cube-benchmark",
-    "href": "index.html#real-cube-benchmark",
-    "title": "SpaxNMF",
-    "section": "Real-Cube Benchmark",
-    "text": "Real-Cube Benchmark\n\n\n\nNGC1512 galaxy + compact sources + sky\n\n\nThe current benchmark uses NGC1512_cube_mockGCs.fits, a mixed IFU cube containing extended galaxy structure, compact GC-like sources, and sky contamination in the same field. The comparison applies the same outer-spaxel sky subtraction and matched preprocessing before fitting PCA, vanilla NMF, and the mixed spatial+sparse model.\n\n\n\n&lt;p class='benchmark-inline'&gt;On the saved NGC1512 benchmark, the mixed spatial+sparse fit reduces the vanilla NMF MSE from 0.000399 to 0.000322 while raising the designated compact-component top-1% concentration from 0.057 to 0.113.&lt;/p&gt;\n\n\n\nUse the benchmark page for the full figure, saved metrics, and the exact run configuration used to generate them.\n\n\nOpen the real-cube benchmark\n\n\n\n\nWhat the benchmark is for\n\n\nThis benchmark is intended as a technical validation target rather than a front-page showcase. It is useful for checking whether the mixed spatial+sparse prior improves compact-component concentration and preserves acceptable reconstruction quality under matched preprocessing.\n\n\n\nPCA remains the rank-(k) squared-error baseline.\n\n\nVanilla NMF provides the non-negative comparison without spatial coupling.\n\n\nSpaxNMF adds Gaussian spatial smoothing and optional sparse compact-source components.\n\n\nThe full figure, saved metrics, and run settings live on the benchmark page.\n\n\n\nUse the benchmark page when you want the detailed diagnostic, not the main landing-page overview."
-  },
-  {
-    "objectID": "index.html#main-entry-points",
-    "href": "index.html#main-entry-points",
-    "title": "SpaxNMF",
-    "section": "Main Entry Points",
-    "text": "Main Entry Points\n\n\n\nFit models\n\n\nspax_nmf() fits the torch model and returns spectra, weights, reconstructions, and optimization history.\n\n\n\n\nReshape data\n\n\ncube_to_matrix() and matrix_to_cube() move between IFU cubes and the matrix view required by the optimizer.\n\n\n\n\nInspect results\n\n\ncomponent_map(), component_spectrum(), plot(), and plot_reconstruction() provide quick diagnostics.\n\n\n\n\nBenchmark on real targets\n\n\nThe benchmark page shows how the current model behaves on a mixed galaxy+GC+sky cube under matched preprocessing."
-  },
-  {
-    "objectID": "index.html#installation",
-    "href": "index.html#installation",
-    "title": "SpaxNMF",
-    "section": "Installation",
-    "text": "Installation\n# install.packages(\"remotes\")\nremotes::install_github(\"RafaelSdeSouza/SpaxNMF\")\ntorch must be available in the local R installation."
-  },
-  {
-    "objectID": "ifu-workflow.html",
-    "href": "ifu-workflow.html",
-    "title": "IFU Workflow",
-    "section": "",
-    "text": "SpaxNMF expects a spaxel-by-wavelength matrix. For a FITS cube, the standard workflow is to read the cube, reshape it, and clean invalid values before fitting."
-  },
-  {
-    "objectID": "ifu-workflow.html#fits-to-matrix",
-    "href": "ifu-workflow.html#fits-to-matrix",
-    "title": "IFU Workflow",
-    "section": "",
-    "text": "SpaxNMF expects a spaxel-by-wavelength matrix. For a FITS cube, the standard workflow is to read the cube, reshape it, and clean invalid values before fitting."
-  },
-  {
-    "objectID": "ifu-workflow.html#fit-and-inspect",
-    "href": "ifu-workflow.html#fit-and-inspect",
-    "title": "IFU Workflow",
-    "section": "Fit and inspect",
-    "text": "Fit and inspect\nExample component-weight maps from the bundled synthetic cube:"
-  },
-  {
-    "objectID": "ifu-workflow.html#reconstruction-outputs",
-    "href": "ifu-workflow.html#reconstruction-outputs",
-    "title": "IFU Workflow",
-    "section": "Reconstruction outputs",
-    "text": "Reconstruction outputs"
-  },
-  {
-    "objectID": "ifu-workflow.html#metadata",
-    "href": "ifu-workflow.html#metadata",
-    "title": "IFU Workflow",
-    "section": "Metadata",
-    "text": "Metadata\nWhen the input to cube_to_matrix() is a FITS-like list object, non-image entries are carried forward as metadata. That metadata can be recovered from the fitted object or reconstructed cube with cube_metadata().\nIf redshift information is stored in the FITS-side metadata, it will now be preserved as metadata and can be carried into fitted and reconstructed outputs."
-  },
-  {
-    "objectID": "ifu-workflow.html#comparative-analyses",
-    "href": "ifu-workflow.html#comparative-analyses",
-    "title": "IFU Workflow",
-    "section": "Comparative analyses",
-    "text": "Comparative analyses\nPublic LOGCUBE products can be used to compare PCA, vanilla NMF, and spatial NMF on the same target after matched preprocessing."
-  },
-  {
-    "objectID": "ifu-workflow.html#benchmark-script",
-    "href": "ifu-workflow.html#benchmark-script",
-    "title": "IFU Workflow",
-    "section": "Benchmark script",
-    "text": "Benchmark script\nThe repository also includes a real-cube diagnostic script that applies the same preprocessing and figure style to external FITS cubes:\nSPAXNMF_REAL_CUBE=/path/to/cube.fits \\\nSPAXNMF_REAL_OUTPUT=site/images/real-benchmark.png \\\nRscript scripts/render_real_manga_diagnostic.R"
+    "objectID": "toy-benchmark.html#interpretation",
+    "href": "toy-benchmark.html#interpretation",
+    "title": "Toy Benchmark",
+    "section": "Interpretation",
+    "text": "Interpretation\nThis toy benchmark should be read as a sanity check, not as a realistic IFU science case. The expected outcome is that both spax_nmf() and NMF::nmf() recover the low-rank structure well. If they do, then poor behavior on the real benchmark should be attributed to the harder galaxy+sky+ compact-source problem rather than to a basic failure of standalone NMF."
   }
 ]
